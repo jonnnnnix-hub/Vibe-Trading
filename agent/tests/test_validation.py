@@ -211,10 +211,14 @@ class TestWalkForward:
 
 
 class TestRunValidation:
-    def test_empty_config_returns_empty(self) -> None:
-        eq = _make_equity(50)
-        result = run_validation({}, eq, [], 1_000_000)
-        assert result == {}
+    def test_empty_config_runs_all_by_default(self) -> None:
+        eq = _make_equity(100)
+        trades = _make_trades([100, -50, 200, -30, 150])
+        result = run_validation({}, eq, trades, 1_000_000)
+        # All three tests run by default
+        assert "monte_carlo" in result
+        assert "bootstrap" in result
+        assert "walk_forward" in result
 
     def test_all_three(self) -> None:
         eq = _make_equity(100)
@@ -231,10 +235,15 @@ class TestRunValidation:
         assert "bootstrap" in result
         assert "walk_forward" in result
 
-    def test_single_tool(self) -> None:
+    def test_skip_individual_tool(self) -> None:
         eq = _make_equity(100)
         trades = _make_trades([100, -50, 200])
-        config = {"validation": {"bootstrap": {"n_bootstrap": 50}}}
+        config = {"validation": {
+            "monte_carlo": {"skip": True},
+            "walk_forward": {"skip": True},
+            "bootstrap": {"n_bootstrap": 50},
+        }}
         result = run_validation(config, eq, trades, 1_000_000)
         assert "bootstrap" in result
         assert "monte_carlo" not in result
+        assert "walk_forward" not in result

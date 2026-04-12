@@ -243,15 +243,24 @@ def run_validation(
     initial_capital: float,
     bars_per_year: int = 252,
 ) -> Dict[str, Any]:
-    """Run configured validation checks.
+    """Run statistical validation on backtest results.
 
-    Reads from config["validation"]:
-      - monte_carlo: {n_simulations, seed}
-      - bootstrap: {n_bootstrap, confidence, seed}
-      - walk_forward: {n_windows}
+    All three tests (Monte Carlo, Bootstrap, Walk-Forward) run by default.
+    Use ``config["validation"]`` to supply custom parameters for any test,
+    or set ``"skip": true`` on a test to disable it.
+
+    Config example (all optional — defaults are sensible)::
+
+        "validation": {
+            "monte_carlo": {"n_simulations": 2000},
+            "bootstrap": {"confidence": 0.99},
+            "walk_forward": {"n_windows": 8},
+            "min_trades": 5,        # threshold checks (separate system)
+            "max_drawdown": -0.70
+        }
 
     Args:
-        config: Backtest config (must contain "validation" key).
+        config: Backtest config dict.
         equity_curve: Equity time series.
         trades: Completed trades.
         initial_capital: Starting capital.
@@ -263,16 +272,22 @@ def run_validation(
     v_cfg = config.get("validation", {})
     results: Dict[str, Any] = {}
 
-    if "monte_carlo" in v_cfg:
-        mc_cfg = v_cfg["monte_carlo"] if isinstance(v_cfg["monte_carlo"], dict) else {}
+    # ── Monte Carlo: always run unless explicitly skipped ──
+    mc_cfg = v_cfg.get("monte_carlo", {})
+    if not isinstance(mc_cfg, dict):
+        mc_cfg = {}
+    if not mc_cfg.get("skip"):
         results["monte_carlo"] = monte_carlo_test(
             trades, initial_capital,
             n_simulations=mc_cfg.get("n_simulations", 1000),
             seed=mc_cfg.get("seed", 42),
         )
 
-    if "bootstrap" in v_cfg:
-        bs_cfg = v_cfg["bootstrap"] if isinstance(v_cfg["bootstrap"], dict) else {}
+    # ── Bootstrap Sharpe CI: always run unless explicitly skipped ──
+    bs_cfg = v_cfg.get("bootstrap", {})
+    if not isinstance(bs_cfg, dict):
+        bs_cfg = {}
+    if not bs_cfg.get("skip"):
         results["bootstrap"] = bootstrap_sharpe_ci(
             equity_curve, bars_per_year=bars_per_year,
             n_bootstrap=bs_cfg.get("n_bootstrap", 1000),
@@ -280,8 +295,11 @@ def run_validation(
             seed=bs_cfg.get("seed", 42),
         )
 
-    if "walk_forward" in v_cfg:
-        wf_cfg = v_cfg["walk_forward"] if isinstance(v_cfg["walk_forward"], dict) else {}
+    # ── Walk-Forward: always run unless explicitly skipped ──
+    wf_cfg = v_cfg.get("walk_forward", {})
+    if not isinstance(wf_cfg, dict):
+        wf_cfg = {}
+    if not wf_cfg.get("skip"):
         results["walk_forward"] = walk_forward_analysis(
             equity_curve, trades,
             n_windows=wf_cfg.get("n_windows", 5),

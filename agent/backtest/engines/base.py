@@ -291,22 +291,33 @@ class BaseEngine(ABC):
         m["by_symbol"] = by_symbol_stats(self.trades)
         m["by_exit_reason"] = by_exit_reason_stats(self.trades)
 
-        # 7. Validation (optional — triggered by config["validation"])
-        if config.get("validation"):
-            from backtest.validation import run_validation
+        # 7. Statistical validation (always runs — Monte Carlo, Bootstrap, Walk-Forward)
+        from backtest.validation import run_validation
+        try:
             v_results = run_validation(
                 config, equity_series, self.trades, self.initial_capital, bars_per_year,
             )
-            m["validation"] = v_results
-            # Write validation.json artifact
-            v_path = run_dir / "artifacts" / "validation.json"
-            v_path.write_text(json.dumps(v_results, indent=2, ensure_ascii=False), encoding="utf-8")
+        except Exception as exc:
+            v_results = {"error": str(exc)}
+        m["validation"] = v_results
+        v_path = run_dir / "artifacts" / "validation.json"
+        v_path.parent.mkdir(parents=True, exist_ok=True)
+        v_path.write_text(json.dumps(v_results, indent=2, ensure_ascii=False), encoding="utf-8")
 
         # 8. Artifacts
         self._write_artifacts(
             run_dir, data_map, dates, equity_series, bench_equity, bench_ret,
             target_pos, m, valid_codes,
         )
+
+        # 9. Strategy Store (Phase 1 feedback loop — non-blocking)
+        try:
+            from backtest.strategy_store import StrategyStore
+            store = StrategyStore()
+            store.record_run(run_dir, config, m)
+            store.close()
+        except Exception as exc:
+            logger.debug("Strategy store write skipped: %s", exc)
 
         # Print scalar metrics (skip nested dicts for JSON compat)
         print(json.dumps({k: v for k, v in m.items() if not isinstance(v, dict)}, indent=2))
