@@ -1,0 +1,28 @@
+{
+  "codes": [
+    "AAPL.US", "ABBV.US", "ADBE.US", "AMD.US", "AMT.US",
+    "AMZN.US", "APD.US", "AVGO.US", "AXP.US", "BAC.US",
+    "BLK.US", "CAT.US", "COP.US", "COST.US", "CRM.US",
+    "CVX.US", "DE.US", "DIS.US", "GE.US", "GOOGL.US",
+    "GS.US", "HD.US", "HON.US", "INTC.US", "JNJ.US",
+    "JPM.US", "KO.US", "LIN.US", "LLY.US", "MA.US",
+    "MCD.US", "META.US", "MRK.US", "MS.US", "MSFT.US",
+    "NEE.US", "NFLX.US", "NKE.US", "NVDA.US", "ORCL.US",
+    "PEP.US", "PFE.US", "PG.US", "QCOM.US", "RTX.US",
+    "SBUX.US", "SLB.US", "SO.US", "T.US", "TMO.US",
+    "TSLA.US", "UNH.US", "UPS.US", "V.US", "XOM.US"
+  ],
+  "start_date": "2015-01-01",
+  "end_date": "2026-04-11",
+  "source": "yfinance",
+  "interval": "1D",
+  "engine": "daily",
+  "initial_cash": 1000000,
+  "leverage": 1.0,
+  "optimizer": "equal_volatility",
+  "validation": {
+    "min_trades": 10,
+    "max_drawdown": -0.50,
+    "min_sharpe": -1.0
+  }
+}
