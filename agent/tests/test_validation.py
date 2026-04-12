@@ -16,6 +16,7 @@ import pytest
 from backtest.models import TradeRecord
 from backtest.validation import (
     bootstrap_sharpe_ci,
+    monte_carlo_returns_test,
     monte_carlo_test,
     run_validation,
     walk_forward_analysis,
@@ -101,6 +102,90 @@ class TestMonteCarlo:
         r1 = monte_carlo_test(trades, 1_000_000, n_simulations=100, seed=42)
         r2 = monte_carlo_test(trades, 1_000_000, n_simulations=100, seed=42)
         assert r1["p_value_sharpe"] == r2["p_value_sharpe"]
+
+
+# ---------------------------------------------------------------------------
+# Monte Carlo Return-Randomization Test
+# ---------------------------------------------------------------------------
+
+
+class TestMonteCarloReturns:
+    def _make_timed_equity(self, n=500, invested_frac=0.6, drift=0.003, seed=42):
+        """Build an equity curve where 'invested' days have positive drift
+        and 'cash' days have zero return, simulating a timing signal."""
+        rng = np.random.default_rng(seed)
+        n_invested = int(n * invested_frac)
+        # Invested days: positive drift with noise
+        invested_rets = rng.normal(drift, 0.015, n_invested)
+        # Cash days: zero return
+        cash_rets = np.zeros(n - n_invested)
+        # Interleave: invested days first, then cash
+        all_rets = np.concatenate([invested_rets, cash_rets])
+        # Shuffle to mix invested/cash days
+        order = rng.permutation(n)
+        all_rets = all_rets[order]
+        # Build equity
+        equity = 1_000_000 * np.cumprod(1 + all_rets)
+        dates = pd.bdate_range("2022-01-01", periods=n)
+        return pd.Series(equity, index=dates)
+
+    def test_output_structure(self) -> None:
+        eq = self._make_timed_equity(200)
+        result = monte_carlo_returns_test(eq, n_simulations=500)
+        assert "actual_sharpe" in result
+        assert "p_value" in result
+        assert "n_simulations" in result
+        assert "n_observations" in result
+        assert "exposure_fraction" in result
+        assert result["n_simulations"] == 500
+
+    def test_p_value_range(self) -> None:
+        eq = self._make_timed_equity(200)
+        result = monte_carlo_returns_test(eq, n_simulations=500)
+        assert 0.0 <= result["p_value"] <= 1.0
+
+    def test_good_timing_low_p_value(self) -> None:
+        """Equity where invested days have strong drift should show
+        significant timing (low p-value)."""
+        eq = self._make_timed_equity(500, invested_frac=0.5, drift=0.005, seed=7)
+        result = monte_carlo_returns_test(eq, n_simulations=5000, seed=42)
+        # Good timing signal → random timing should rarely beat it
+        assert result["p_value"] < 0.20
+
+    def test_no_timing_high_p_value(self) -> None:
+        """Equity where all days are invested (no timing) → trivial exposure."""
+        eq = _make_equity(200, drift=0.001)
+        result = monte_carlo_returns_test(eq, n_simulations=500)
+        # Nearly all returns are non-zero → exposure ~ 1.0
+        # Should either report trivial or high p-value
+        assert result.get("p_value", 1.0) >= 0.05 or "error" in result
+
+    def test_too_few_observations(self) -> None:
+        eq = pd.Series([100, 101, 102, 103, 104],
+                       index=pd.bdate_range("2025-01-01", periods=5))
+        result = monte_carlo_returns_test(eq, n_simulations=100)
+        assert "error" in result
+
+    def test_reproducibility(self) -> None:
+        eq = self._make_timed_equity(200)
+        r1 = monte_carlo_returns_test(eq, n_simulations=200, seed=42)
+        r2 = monte_carlo_returns_test(eq, n_simulations=200, seed=42)
+        assert r1["p_value"] == r2["p_value"]
+        assert r1["actual_sharpe"] == r2["actual_sharpe"]
+
+    def test_with_positions_df(self) -> None:
+        """Test that passing positions_df is used for exposure detection."""
+        eq = self._make_timed_equity(200, invested_frac=0.6)
+        # Create a positions_df where only ~60% of days have positions
+        dates = eq.index[1:]  # skip first (no return for it)
+        n = len(dates)
+        n_inv = int(n * 0.6)
+        pos_vals = np.zeros(n)
+        pos_vals[:n_inv] = 0.5  # invested
+        pos_df = pd.DataFrame({"TEST.US": pos_vals}, index=dates)
+        result = monte_carlo_returns_test(eq, positions_df=pos_df, n_simulations=200)
+        assert "p_value" in result
+        assert 0.4 < result["exposure_fraction"] < 0.8
 
 
 # ---------------------------------------------------------------------------
@@ -215,23 +300,26 @@ class TestRunValidation:
         eq = _make_equity(100)
         trades = _make_trades([100, -50, 200, -30, 150])
         result = run_validation({}, eq, trades, 1_000_000)
-        # All three tests run by default
+        # All four tests run by default
         assert "monte_carlo" in result
+        assert "monte_carlo_returns" in result
         assert "bootstrap" in result
         assert "walk_forward" in result
 
-    def test_all_three(self) -> None:
+    def test_all_four(self) -> None:
         eq = _make_equity(100)
         trades = _make_trades([100, -50, 200, -30, 150])
         config = {
             "validation": {
                 "monte_carlo": {"n_simulations": 50},
+                "monte_carlo_returns": {"n_simulations": 200},
                 "bootstrap": {"n_bootstrap": 50},
                 "walk_forward": {"n_windows": 3},
             }
         }
         result = run_validation(config, eq, trades, 1_000_000)
         assert "monte_carlo" in result
+        assert "monte_carlo_returns" in result
         assert "bootstrap" in result
         assert "walk_forward" in result
 

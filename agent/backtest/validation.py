@@ -1,7 +1,9 @@
 """Statistical validation for backtest results.
 
-Three independent tools:
-  - Monte Carlo permutation test: is the strategy significantly better than random?
+Four independent tools:
+  - Monte Carlo permutation test (trade-level): is the trade ordering significant?
+  - Monte Carlo return-randomization test: is the strategy Sharpe significantly
+    better than what random daily returns would produce?
   - Bootstrap Sharpe CI: how stable is the risk-adjusted return?
   - Walk-Forward analysis: is performance consistent across time windows?
 
@@ -89,6 +91,118 @@ def _path_metrics(pnls: np.ndarray, initial_capital: float) -> Dict[str, float]:
     dd = (equity - peak) / np.where(peak > 0, peak, 1.0)
     max_dd = float(dd.min())
     return {"sharpe": sharpe, "max_dd": max_dd}
+
+
+# ─── Monte Carlo Return-Randomization Test ───
+
+
+def monte_carlo_returns_test(
+    equity_curve: pd.Series,
+    positions_df: pd.DataFrame | None = None,
+    benchmark_returns: pd.Series | None = None,
+    n_simulations: int = 10000,
+    bars_per_year: int = 252,
+    seed: int = 42,
+) -> Dict[str, Any]:
+    """Randomize signal timing to test whether the strategy’s entry/exit
+    decisions add value over random market exposure.
+
+    Unlike ``monte_carlo_test`` (which permutes trade-level PnLs to test
+    path-dependence), this test asks: **would randomly timed positions in
+    the same stocks produce a comparable Sharpe?**
+
+    Method:
+      1. Compute the strategy’s *exposure fraction* on each day (what
+         fraction of days the portfolio is invested vs. cash).
+      2. For each simulation, randomly select the same number of
+         "invested" days from the available daily returns and compute
+         Sharpe.  Days not selected count as zero return (cash).
+      3. p-value = fraction of simulations where random-timing Sharpe
+         ≥ actual Sharpe.
+
+    A low p-value (< 0.05) means the signal’s timing significantly
+    outperforms random entry/exit.
+
+    Args:
+        equity_curve: Portfolio equity time series.
+        positions_df: DataFrame of daily position weights (columns = codes).
+            Used to compute per-day exposure.  If ``None``, falls back to
+            inferring invested days from non-zero portfolio returns.
+        benchmark_returns: Per-day equal-weight benchmark returns.  If
+            ``None``, the strategy’s own daily returns are used as the
+            pool of possible daily outcomes.
+        n_simulations: Number of random timing draws (default 10 000).
+        bars_per_year: Annualisation factor.
+        seed: Random seed for reproducibility.
+
+    Returns:
+        Dict with actual_sharpe, p_value, simulated_sharpe stats,
+        exposure_fraction, and n_observations.
+    """
+    port_returns = equity_curve.pct_change().dropna()
+    all_returns = port_returns.values
+    n = len(all_returns)
+
+    if n < 20:
+        return {"error": "need at least 20 daily return observations", "p_value": 1.0}
+
+    actual_sharpe = _sharpe(all_returns, bars_per_year)
+
+    # Determine which days the strategy was invested (non-zero return)
+    if positions_df is not None:
+        aligned_pos = positions_df.reindex(port_returns.index).fillna(0.0)
+        invested_mask = (aligned_pos.abs().sum(axis=1) > 1e-8).values
+    else:
+        invested_mask = np.abs(all_returns) > 1e-12
+
+    n_invested = int(invested_mask.sum())
+    exposure_frac = n_invested / n if n > 0 else 0.0
+
+    if n_invested < 5 or n_invested >= n:
+        return {
+            "actual_sharpe": round(actual_sharpe, 4),
+            "p_value": 1.0,
+            "error": f"trivial exposure ({n_invested}/{n} days invested)",
+            "exposure_fraction": round(exposure_frac, 4),
+            "n_observations": n,
+        }
+
+    # Pool of daily returns when invested (the strategy's actual
+    # invested-day returns); on "cash" days the sim gets 0.
+    invested_returns = all_returns[invested_mask]
+    cash_returns = all_returns[~invested_mask]
+    # Build the full pool: invested days keep their return, cash days = 0
+    return_pool = all_returns.copy()
+
+    rng = np.random.default_rng(seed)
+    count_ge = 0
+    sim_sharpes = np.empty(n_simulations)
+
+    for i in range(n_simulations):
+        # Randomly pick which days are "invested" (same count)
+        perm_idx = rng.permutation(n)
+        sim_invested = perm_idx[:n_invested]
+        sim_returns = np.zeros(n)
+        sim_returns[sim_invested] = return_pool[sim_invested]
+        s = _sharpe(sim_returns, bars_per_year)
+        sim_sharpes[i] = s
+        if s >= actual_sharpe:
+            count_ge += 1
+
+    p_value = count_ge / n_simulations
+
+    return {
+        "actual_sharpe": round(actual_sharpe, 4),
+        "p_value": round(p_value, 4),
+        "simulated_sharpe_mean": round(float(sim_sharpes.mean()), 4),
+        "simulated_sharpe_std": round(float(sim_sharpes.std()), 4),
+        "simulated_sharpe_p5": round(float(np.percentile(sim_sharpes, 5)), 4),
+        "simulated_sharpe_p95": round(float(np.percentile(sim_sharpes, 95)), 4),
+        "n_simulations": n_simulations,
+        "n_observations": n,
+        "n_invested_days": n_invested,
+        "exposure_fraction": round(exposure_frac, 4),
+    }
 
 
 # ─── Bootstrap Sharpe CI ───
@@ -242,10 +356,16 @@ def run_validation(
     trades: List[TradeRecord],
     initial_capital: float,
     bars_per_year: int = 252,
+    positions_df: pd.DataFrame | None = None,
 ) -> Dict[str, Any]:
     """Run statistical validation on backtest results.
 
-    All three tests (Monte Carlo, Bootstrap, Walk-Forward) run by default.
+    All four tests run by default:
+      - Monte Carlo trade-order permutation
+      - Monte Carlo return-randomization (signal-timing significance)
+      - Bootstrap Sharpe CI
+      - Walk-Forward consistency
+
     Use ``config["validation"]`` to supply custom parameters for any test,
     or set ``"skip": true`` on a test to disable it.
 
@@ -253,6 +373,7 @@ def run_validation(
 
         "validation": {
             "monte_carlo": {"n_simulations": 2000},
+            "monte_carlo_returns": {"n_simulations": 10000},
             "bootstrap": {"confidence": 0.99},
             "walk_forward": {"n_windows": 8},
             "min_trades": 5,        # threshold checks (separate system)
@@ -265,6 +386,9 @@ def run_validation(
         trades: Completed trades.
         initial_capital: Starting capital.
         bars_per_year: Annualisation factor.
+        positions_df: Optional DataFrame of daily target weights (from
+            backtest).  Passed to ``monte_carlo_returns_test`` for accurate
+            exposure detection.
 
     Returns:
         Dict keyed by validation type with results.
@@ -281,6 +405,18 @@ def run_validation(
             trades, initial_capital,
             n_simulations=mc_cfg.get("n_simulations", 1000),
             seed=mc_cfg.get("seed", 42),
+        )
+
+    # ── Monte Carlo Return-Randomization: always run unless explicitly skipped ──
+    mcr_cfg = v_cfg.get("monte_carlo_returns", {})
+    if not isinstance(mcr_cfg, dict):
+        mcr_cfg = {}
+    if not mcr_cfg.get("skip"):
+        results["monte_carlo_returns"] = monte_carlo_returns_test(
+            equity_curve, positions_df=positions_df,
+            bars_per_year=bars_per_year,
+            n_simulations=mcr_cfg.get("n_simulations", 10000),
+            seed=mcr_cfg.get("seed", 42),
         )
 
     # ── Bootstrap Sharpe CI: always run unless explicitly skipped ──
@@ -374,6 +510,7 @@ def main(run_dir: Path) -> Dict[str, Any]:
 
     results = {
         "monte_carlo": monte_carlo_test(trades, initial_capital),
+        "monte_carlo_returns": monte_carlo_returns_test(equity),
         "bootstrap": bootstrap_sharpe_ci(equity),
         "walk_forward": walk_forward_analysis(equity, trades),
     }

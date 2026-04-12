@@ -291,11 +291,12 @@ class BaseEngine(ABC):
         m["by_symbol"] = by_symbol_stats(self.trades)
         m["by_exit_reason"] = by_exit_reason_stats(self.trades)
 
-        # 7. Statistical validation (always runs — Monte Carlo, Bootstrap, Walk-Forward)
+        # 7. Statistical validation (always runs — MC trade-order, MC return-randomization, Bootstrap, Walk-Forward)
         from backtest.validation import run_validation
         try:
             v_results = run_validation(
                 config, equity_series, self.trades, self.initial_capital, bars_per_year,
+                positions_df=target_pos,
             )
         except Exception as exc:
             v_results = {"error": str(exc)}
