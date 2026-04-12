@@ -44,6 +44,8 @@ def calc_bars_per_year(interval: str = "1D", source: str = "tushare") -> int:
 def win_rate_and_stats(trades: List[TradeRecord]) -> Dict[str, float]:
     """Win rate and P&L statistics from completed trades.
 
+    Single-pass implementation: iterates trades once to compute all stats.
+
     Args:
         trades: Completed round-trip trades.
 
@@ -60,30 +62,38 @@ def win_rate_and_stats(trades: List[TradeRecord]) -> Dict[str, float]:
             "profit_factor": 0.0,
         }
 
-    wins = [t.pnl for t in trades if t.pnl > 0]
-    losses = [t.pnl for t in trades if t.pnl < 0]
-
-    win_rate = len(wins) / len(trades)
-
-    avg_win = float(np.mean(wins)) if wins else 0.0
-    avg_loss = abs(float(np.mean(losses))) if losses else 1e-10
-    profit_loss_ratio = avg_win / avg_loss if avg_loss > 1e-10 else 0.0
-
-    gross_profit = sum(wins) if wins else 0.0
-    gross_loss = abs(sum(losses)) if losses else 1e-10
-    profit_factor = gross_profit / gross_loss if gross_loss > 1e-10 else 0.0
-
+    win_count = 0
+    gross_profit = 0.0
+    gross_loss = 0.0
     max_consec = 0
     cur_consec = 0
+    hold_sum = 0.0
+    hold_count = 0
+
     for t in trades:
-        if t.pnl < 0:
+        pnl = t.pnl
+        if pnl > 0:
+            win_count += 1
+            gross_profit += pnl
+            cur_consec = 0
+        elif pnl < 0:
+            gross_loss -= pnl  # accumulate as positive
             cur_consec += 1
-            max_consec = max(max_consec, cur_consec)
+            if cur_consec > max_consec:
+                max_consec = cur_consec
         else:
             cur_consec = 0
+        if t.holding_bars > 0:
+            hold_sum += t.holding_bars
+            hold_count += 1
 
-    hold_bars = [t.holding_bars for t in trades if t.holding_bars > 0]
-    avg_holding = float(np.mean(hold_bars)) if hold_bars else 0.0
+    n = len(trades)
+    win_rate = win_count / n
+    avg_win = gross_profit / win_count if win_count else 0.0
+    avg_loss = gross_loss / (n - win_count) if (n - win_count) > 0 else 1e-10
+    profit_loss_ratio = avg_win / avg_loss if avg_loss > 1e-10 else 0.0
+    profit_factor = gross_profit / gross_loss if gross_loss > 1e-10 else 0.0
+    avg_holding = hold_sum / hold_count if hold_count else 0.0
 
     return {
         "win_rate": win_rate,
@@ -95,7 +105,7 @@ def win_rate_and_stats(trades: List[TradeRecord]) -> Dict[str, float]:
 
 
 def by_symbol_stats(trades: List[TradeRecord]) -> Dict[str, Dict[str, Any]]:
-    """Per-symbol trade statistics.
+    """Per-symbol trade statistics (single-pass accumulation).
 
     Args:
         trades: Completed round-trip trades.
@@ -103,25 +113,31 @@ def by_symbol_stats(trades: List[TradeRecord]) -> Dict[str, Dict[str, Any]]:
     Returns:
         {symbol: {count, win_rate, total_pnl, avg_pnl}}.
     """
-    groups: Dict[str, list] = {}
-    for t in trades:
-        groups.setdefault(t.symbol, []).append(t)
+    # Accumulate counts in one pass instead of building intermediate lists
+    counts: Dict[str, int] = {}
+    win_counts: Dict[str, int] = {}
+    pnl_sums: Dict[str, float] = {}
 
-    result = {}
-    for sym, sym_trades in groups.items():
-        pnls = [t.pnl for t in sym_trades]
-        wins = [p for p in pnls if p > 0]
-        result[sym] = {
-            "count": len(sym_trades),
-            "win_rate": round(len(wins) / len(sym_trades), 4) if sym_trades else 0.0,
-            "total_pnl": round(sum(pnls), 2),
-            "avg_pnl": round(float(np.mean(pnls)), 2) if pnls else 0.0,
+    for t in trades:
+        sym = t.symbol
+        counts[sym] = counts.get(sym, 0) + 1
+        pnl_sums[sym] = pnl_sums.get(sym, 0.0) + t.pnl
+        if t.pnl > 0:
+            win_counts[sym] = win_counts.get(sym, 0) + 1
+
+    return {
+        sym: {
+            "count": cnt,
+            "win_rate": round(win_counts.get(sym, 0) / cnt, 4),
+            "total_pnl": round(pnl_sums[sym], 2),
+            "avg_pnl": round(pnl_sums[sym] / cnt, 2),
         }
-    return result
+        for sym, cnt in counts.items()
+    }
 
 
 def by_exit_reason_stats(trades: List[TradeRecord]) -> Dict[str, Dict[str, Any]]:
-    """Per-exit-reason trade statistics.
+    """Per-exit-reason trade statistics (single-pass accumulation).
 
     Args:
         trades: Completed round-trip trades.
@@ -129,18 +145,18 @@ def by_exit_reason_stats(trades: List[TradeRecord]) -> Dict[str, Dict[str, Any]]
     Returns:
         {reason: {count, total_pnl}}.
     """
-    groups: Dict[str, list] = {}
-    for t in trades:
-        groups.setdefault(t.exit_reason, []).append(t)
+    counts: Dict[str, int] = {}
+    pnl_sums: Dict[str, float] = {}
 
-    result = {}
-    for reason, reason_trades in groups.items():
-        pnls = [t.pnl for t in reason_trades]
-        result[reason] = {
-            "count": len(reason_trades),
-            "total_pnl": round(sum(pnls), 2),
-        }
-    return result
+    for t in trades:
+        r = t.exit_reason
+        counts[r] = counts.get(r, 0) + 1
+        pnl_sums[r] = pnl_sums.get(r, 0.0) + t.pnl
+
+    return {
+        reason: {"count": cnt, "total_pnl": round(pnl_sums[reason], 2)}
+        for reason, cnt in counts.items()
+    }
 
 
 def calc_metrics(
@@ -171,7 +187,10 @@ def calc_metrics(
     port_ret = equity_curve.pct_change().fillna(0.0)
 
     total_ret = float(equity_curve.iloc[-1] / initial_cash - 1)
-    ann_ret = float((1 + total_ret) ** (bpy / max(n, 1)) - 1)
+    # Guard against negative equity (e.g. leveraged forex) which would produce
+    # a complex number when raising a negative base to a fractional exponent.
+    growth = 1 + total_ret
+    ann_ret = float(abs(growth) ** (bpy / max(n, 1)) - 1) if growth > 0 else -1.0
     vol = float(port_ret.std())
     sharpe = float(port_ret.mean() / (vol + 1e-10) * np.sqrt(bpy))
 

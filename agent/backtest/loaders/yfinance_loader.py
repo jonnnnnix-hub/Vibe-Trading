@@ -12,17 +12,13 @@ from backtest.loaders.base import validate_date_range
 from backtest.loaders.registry import register
 
 _OHLCV_COLUMNS = ["open", "high", "low", "close", "volume"]
+# Only map capitalized names; lowercase already matches the target schema.
 _COLUMN_RENAMES = {
     "Open": "open",
     "High": "high",
     "Low": "low",
     "Close": "close",
     "Volume": "volume",
-    "open": "open",
-    "high": "high",
-    "low": "low",
-    "close": "close",
-    "volume": "volume",
 }
 _INTERVAL_MAP = {
     "1D": "1d",
@@ -103,13 +99,17 @@ def _flatten_columns(frame: pd.DataFrame, symbol: str) -> pd.DataFrame:
     if not isinstance(frame.columns, pd.MultiIndex):
         return frame
 
-    cleaned_columns = []
-    for column in frame.columns:
-        pieces = [str(part) for part in column if str(part) and str(part).upper() != symbol.upper()]
-        cleaned_columns.append(pieces[-1] if pieces else str(column[-1]))
-    flattened = frame.copy()
-    flattened.columns = cleaned_columns
-    return flattened
+    sym_upper = symbol.upper()
+    cleaned_columns = [
+        next(
+            (str(p) for p in reversed(col) if (s := str(p)) and s.upper() != sym_upper),
+            str(col[-1]),
+        )
+        for col in frame.columns
+    ]
+    frame = frame.copy()
+    frame.columns = cleaned_columns
+    return frame
 
 
 def _extract_symbol_frame(frame: pd.DataFrame, symbol: str, total_symbols: int) -> pd.DataFrame:
@@ -151,7 +151,7 @@ def _normalize_frame(frame: pd.DataFrame, requested_interval: str) -> pd.DataFra
     if frame.empty:
         return pd.DataFrame(columns=_OHLCV_COLUMNS)
 
-    normalized = _flatten_columns(frame.copy(), "")
+    normalized = _flatten_columns(frame, "")
     normalized = normalized.rename(columns=_COLUMN_RENAMES)
 
     for column in _OHLCV_COLUMNS:
@@ -161,8 +161,7 @@ def _normalize_frame(frame: pd.DataFrame, requested_interval: str) -> pd.DataFra
             else:
                 return pd.DataFrame(columns=_OHLCV_COLUMNS)
 
-    normalized = normalized.loc[:, _OHLCV_COLUMNS].copy()
-    normalized = normalized.apply(pd.to_numeric, errors="coerce")
+    normalized = normalized[_OHLCV_COLUMNS].apply(pd.to_numeric, errors="coerce")
 
     index = pd.DatetimeIndex(pd.to_datetime(normalized.index))
     if getattr(index, "tz", None) is not None:

@@ -52,31 +52,34 @@ def _align(
     Returns:
         (dates, close_df, positions_df, returns_df)
     """
-    all_dates: set = set()
-    for c in codes:
-        all_dates.update(data_map[c].index)
-    dates = pd.DatetimeIndex(sorted(all_dates))
+    dates = data_map[codes[0]].index
+    for c in codes[1:]:
+        dates = dates.union(data_map[c].index)
+    dates = dates.sort_values()
 
-    close = pd.DataFrame(index=dates, columns=codes, dtype=float)
-    for c in codes:
-        close[c] = data_map[c]["close"].reindex(dates)
+    close = pd.DataFrame(
+        {c: data_map[c]["close"].reindex(dates) for c in codes},
+        index=dates,
+    )
 
     # ffill with limit to avoid masking long suspensions (e.g. 3-week halt)
     close = close.ffill(limit=5)
 
     # Drop symbols that are entirely NaN (no data overlap with date range)
-    all_nan_cols = [c for c in codes if close[c].isna().all()]
-    if all_nan_cols:
-        logger.warning("Symbols dropped (no usable price data): %s", all_nan_cols)
-        codes = [c for c in codes if c not in all_nan_cols]
+    nan_mask = close.isna().all()
+    if nan_mask.any():
+        dropped = list(nan_mask[nan_mask].index)
+        logger.warning("Symbols dropped (no usable price data): %s", dropped)
+        codes = [c for c in codes if c not in dropped]
         if not codes:
-            raise ValueError(f"All symbols have no data in the requested date range")
+            raise ValueError("All symbols have no data in the requested date range")
         close = close[codes]
 
-    pos = pd.DataFrame(0.0, index=dates, columns=codes)
-    for c in codes:
-        raw = signal_map[c].reindex(dates).fillna(0.0).clip(-1.0, 1.0)
-        pos[c] = raw.shift(1).fillna(0.0)
+    pos = pd.DataFrame(
+        {c: signal_map[c].reindex(dates).fillna(0.0).clip(-1.0, 1.0).shift(1).fillna(0.0)
+         for c in codes},
+        index=dates,
+    )
 
     ret = close.pct_change().fillna(0.0)
 
@@ -319,25 +322,37 @@ class BaseEngine(ABC):
         target_pos: pd.DataFrame,
         codes: List[str],
     ) -> None:
-        """Bar-by-bar execution with market rule enforcement."""
+        """Bar-by-bar execution with market rule enforcement.
+
+        Optimizations over naive implementation:
+          - Pre-build index sets per symbol for O(1) membership checks
+          - Compute equity once per bar (reuse for snapshot)
+          - Pre-extract target weights as numpy array for fast access
+        """
+        # Pre-build index sets for O(1) "ts in data_map[c].index" checks
+        index_sets = {c: set(data_map[c].index) for c in codes}
+
+        # Pre-extract target weights as a numpy matrix for fast row access
+        target_values = target_pos[codes].values  # shape (n_dates, n_codes)
+
         for i, ts in enumerate(dates):
             self._bar_idx = i
 
             # a. Per-bar hooks (funding fees, liquidation checks)
             for c in codes:
-                if ts in data_map[c].index:
+                if ts in index_sets[c]:
                     self.on_bar(c, data_map[c].loc[ts], ts)
 
             # b. Rebalance each symbol to target weight
             equity = self._calc_equity(close_df, ts)
-            for c in codes:
+            row = target_values[i]
+            for j, c in enumerate(codes):
                 try:
-                    target_w = float(target_pos.at[ts, c]) if ts in target_pos.index else 0.0
-                    self._rebalance(c, target_w, data_map.get(c), ts, equity)
+                    self._rebalance(c, float(row[j]), data_map.get(c), ts, equity)
                 except Exception as exc:
                     logger.warning("Rebalance failed for %s at %s: %s", c, ts, exc)
 
-            # c. Record equity snapshot
+            # c. Record equity snapshot (recompute after rebalancing)
             snap_equity = self._calc_equity(close_df, ts)
             total_unrealized = 0.0
             for p in self.positions.values():
@@ -501,9 +516,10 @@ class BaseEngine(ABC):
         out = run_dir / "artifacts"
         out.mkdir(parents=True, exist_ok=True)
 
-        # OHLCV per symbol
+        # OHLCV per symbol (sanitize code for filesystem — e.g. EUR/USD → EUR_USD)
         for code, df in data_map.items():
-            df.to_csv(out / f"ohlcv_{code}.csv")
+            safe_code = code.replace("/", "_").replace("\\", "_")
+            df.to_csv(out / f"ohlcv_{safe_code}.csv")
 
         # Equity curve
         port_ret = equity_series.pct_change().fillna(0.0)
@@ -523,37 +539,28 @@ class BaseEngine(ABC):
         target_pos.index.name = "timestamp"
         target_pos.to_csv(out / "positions.csv")
 
-        # Trades (compatible format)
-        trade_rows = []
-        for t in self.trades:
-            # Entry event
-            trade_rows.append({
-                "timestamp": str(t.entry_time.date()) if hasattr(t.entry_time, "date") else str(t.entry_time),
-                "code": t.symbol,
-                "side": "buy" if t.direction == 1 else "sell",
-                "price": round(t.entry_price, 4),
-                "qty": round(t.size, 6),
-                "reason": "signal",
-                "pnl": 0.0,
-                "holding_days": 0,
-                "return_pct": 0.0,
-            })
-            # Exit event
+        # Trades (compatible format) — pre-allocate list with known size
+        n_trades = len(self.trades)
+        trade_rows = [None] * (n_trades * 2) if n_trades else []
+        _date_str = lambda ts: str(ts.date()) if hasattr(ts, "date") else str(ts)
+        for idx, t in enumerate(self.trades):
+            base = idx * 2
+            trade_rows[base] = (
+                _date_str(t.entry_time), t.symbol,
+                "buy" if t.direction == 1 else "sell",
+                round(t.entry_price, 4), round(t.size, 6),
+                "signal", 0.0, 0, 0.0,
+            )
             try:
                 hold_days = (t.exit_time - t.entry_time).days
             except Exception:
                 hold_days = 0
-            trade_rows.append({
-                "timestamp": str(t.exit_time.date()) if hasattr(t.exit_time, "date") else str(t.exit_time),
-                "code": t.symbol,
-                "side": "sell" if t.direction == 1 else "buy",
-                "price": round(t.exit_price, 4),
-                "qty": round(t.size, 6),
-                "reason": t.exit_reason,
-                "pnl": round(t.pnl, 4),
-                "holding_days": hold_days,
-                "return_pct": round(t.pnl_pct, 2),
-            })
+            trade_rows[base + 1] = (
+                _date_str(t.exit_time), t.symbol,
+                "sell" if t.direction == 1 else "buy",
+                round(t.exit_price, 4), round(t.size, 6),
+                t.exit_reason, round(t.pnl, 4), hold_days, round(t.pnl_pct, 2),
+            )
 
         trade_cols = ["timestamp", "code", "side", "price", "qty", "reason", "pnl", "holding_days", "return_pct"]
         pd.DataFrame(trade_rows or [], columns=trade_cols).to_csv(out / "trades.csv", index=False)
