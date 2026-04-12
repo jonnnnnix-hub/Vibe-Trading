@@ -1,0 +1,32 @@
+{
+  "codes": [
+    "BTC-USDT",
+    "ETH-USDT",
+    "SOL-USDT",
+    "BNB-USDT",
+    "XRP-USDT",
+    "ADA-USDT",
+    "DOGE-USDT",
+    "AVAX-USDT",
+    "DOT-USDT",
+    "LINK-USDT",
+    "MATIC-USDT",
+    "UNI-USDT",
+    "ATOM-USDT",
+    "LTC-USDT",
+    "NEAR-USDT"
+  ],
+  "start_date": "2022-01-01",
+  "end_date": "2026-04-11",
+  "source": "ccxt",
+  "interval": "1D",
+  "engine": "daily",
+  "initial_cash": 1000000,
+  "leverage": 1.0,
+  "optimizer": "equal_volatility",
+  "validation": {
+    "min_trades": 5,
+    "max_drawdown": -0.70,
+    "min_sharpe": -2.0
+  }
+}
