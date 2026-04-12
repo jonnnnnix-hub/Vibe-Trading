@@ -1,0 +1,32 @@
+{
+  "codes": [
+    "AAPL.US",
+    "MSFT.US",
+    "GOOGL.US",
+    "AMZN.US",
+    "NVDA.US",
+    "META.US",
+    "TSLA.US",
+    "JPM.US",
+    "V.US",
+    "JNJ.US",
+    "UNH.US",
+    "XOM.US",
+    "PG.US",
+    "HD.US",
+    "MA.US"
+  ],
+  "start_date": "2022-01-01",
+  "end_date": "2026-04-11",
+  "source": "yfinance",
+  "interval": "1D",
+  "engine": "daily",
+  "initial_cash": 1000000,
+  "leverage": 1.0,
+  "optimizer": "equal_volatility",
+  "validation": {
+    "min_trades": 10,
+    "max_drawdown": -0.50,
+    "min_sharpe": -1.0
+  }
+}
