@@ -1,0 +1,32 @@
+{
+  "codes": [
+    "700.HK",
+    "9988.HK",
+    "1810.HK",
+    "3690.HK",
+    "9618.HK",
+    "1211.HK",
+    "2318.HK",
+    "939.HK",
+    "1398.HK",
+    "388.HK",
+    "2628.HK",
+    "941.HK",
+    "2382.HK",
+    "1928.HK",
+    "27.HK"
+  ],
+  "start_date": "2022-01-01",
+  "end_date": "2026-04-11",
+  "source": "yfinance",
+  "interval": "1D",
+  "engine": "daily",
+  "initial_cash": 1000000,
+  "leverage": 1.0,
+  "optimizer": "equal_volatility",
+  "validation": {
+    "min_trades": 5,
+    "max_drawdown": -0.60,
+    "min_sharpe": -2.0
+  }
+}
