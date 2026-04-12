@@ -1,0 +1,24 @@
+{
+  "codes": [
+    "BTC-USDT",
+    "ETH-USDT",
+    "XRP-USDT",
+    "ADA-USDT",
+    "LTC-USDT",
+    "LINK-USDT",
+    "TRX-USDT"
+  ],
+  "start_date": "2019-01-01",
+  "end_date": "2021-06-01",
+  "source": "okx",
+  "interval": "1D",
+  "engine": "daily",
+  "initial_cash": 1000000,
+  "leverage": 1.0,
+  "optimizer": "equal_volatility",
+  "validation": {
+    "min_trades": 1,
+    "max_drawdown": -0.90,
+    "min_sharpe": -5.0
+  }
+}

@@ -86,6 +86,9 @@ class DataLoader:
     ) -> Optional[pd.DataFrame]:
         """Paginated candle download.
 
+        Tries ``/market/candles`` first (recent data), then falls back to
+        ``/market/history-candles`` for older periods (pre-2024).
+
         Args:
             inst_id: OKX instrument id.
             start_ts: Start time (ms).
@@ -96,6 +99,19 @@ class DataLoader:
         Returns:
             OHLCV DataFrame or None.
         """
+        # Try recent endpoint first, then history endpoint as fallback
+        for endpoint in ("market/candles", "market/history-candles"):
+            df = self._fetch_from_endpoint(inst_id, start_ts, end_ts, bar, max_pages, endpoint)
+            if df is not None and not df.empty:
+                return df
+        print(f"[WARN] OKX empty response from both endpoints: {inst_id}")
+        return None
+
+    def _fetch_from_endpoint(
+        self, inst_id: str, start_ts: int, end_ts: int,
+        bar: str, max_pages: int, endpoint: str,
+    ) -> Optional[pd.DataFrame]:
+        """Fetch candles from a specific OKX endpoint with pagination."""
         all_rows: list = []
         after = str(end_ts)
 
@@ -106,13 +122,15 @@ class DataLoader:
                 "limit": str(_MAX_PER_PAGE),
                 "after": after,
             }
-            resp = requests.get(f"{BASE_URL}/market/candles", params=params, timeout=15)
+            resp = requests.get(f"{BASE_URL}/{endpoint}", params=params, timeout=15)
             data = resp.json()
             if data.get("code") != "0" or not data.get("data"):
                 break
 
             rows = data["data"]
-            rows = [r for r in rows if r[8] == "1"]
+            # history-candles rows have only 6 fields (no confirm flag)
+            if endpoint == "market/candles":
+                rows = [r for r in rows if r[8] == "1"]
             all_rows.extend(rows)
 
             oldest_ts = int(rows[-1][0]) if rows else start_ts
@@ -121,10 +139,16 @@ class DataLoader:
             after = str(oldest_ts)
 
         if not all_rows:
-            print(f"[WARN] OKX empty response: {inst_id}")
             return None
 
-        columns = ["ts", "open", "high", "low", "close", "vol", "volCcy", "volCcyQuote", "confirm"]
+        # history-candles: [ts, o, h, l, c, vol, volCcy, volCcyQuote] (8 cols)
+        # market/candles:  [ts, o, h, l, c, vol, volCcy, volCcyQuote, confirm] (9 cols)
+        ncols = len(all_rows[0])
+        if ncols >= 9:
+            columns = ["ts", "open", "high", "low", "close", "vol", "volCcy", "volCcyQuote", "confirm"]
+        else:
+            columns = ["ts", "open", "high", "low", "close", "vol", "volCcy", "volCcyQuote"][:ncols]
+
         df = pd.DataFrame(all_rows, columns=columns)
         df["trade_date"] = pd.to_datetime(df["ts"].astype("int64"), unit="ms")
         for col in ["open", "high", "low", "close"]:
