@@ -86,8 +86,12 @@ def _align(
     if optimizer is not None:
         pos = optimizer(ret, pos, dates)
 
-    scale = pos.abs().sum(axis=1).clip(lower=1.0)
-    pos = pos.div(scale, axis=0)
+    # Cash-aware optimizers set skip_pos_normalization=True to preserve
+    # intentional under-investment (cash allocation).  Only normalize
+    # when the optimizer hasn't already capped exposure.
+    if not getattr(pos, 'attrs', {}).get('skip_pos_normalization', False):
+        scale = pos.abs().sum(axis=1).clip(lower=1.0)
+        pos = pos.div(scale, axis=0)
 
     return dates, close, pos, ret
 
@@ -137,6 +141,18 @@ class BaseEngine(ABC):
         self.equity_snapshots: List[EquitySnapshot] = []
         self._bar_idx: int = 0
         self._active_symbol: str = ""  # set by _rebalance/_close_position for subclass use
+
+        # Trailing-stop configuration
+        self.trailing_stop_pct: float = config.get("trailing_stop_pct", 0.0)
+        self.trailing_stop_activation: float = config.get("trailing_stop_activation", 0.0)  # min profit to activate
+        self._peak_prices: Dict[str, float] = {}  # symbol -> highest price since entry
+        self._entry_prices: Dict[str, float] = {}  # symbol -> entry price (for activation check)
+
+        # Portfolio-level drawdown circuit breaker
+        self.portfolio_stop_pct: float = config.get("portfolio_stop_pct", 0.0)
+        self.portfolio_recovery_pct: float = config.get("portfolio_recovery_pct", 0.0)  # resume after recovery
+        self._portfolio_peak: float = self.initial_capital
+        self._circuit_breaker_active: bool = False
 
     # ── Market rule interface (subclass must implement) ──
 
@@ -296,7 +312,7 @@ class BaseEngine(ABC):
         try:
             v_results = run_validation(
                 config, equity_series, self.trades, self.initial_capital, bars_per_year,
-                positions_df=target_pos,
+                positions_df=target_pos, returns_df=ret_df,
             )
         except Exception as exc:
             v_results = {"error": str(exc)}
@@ -355,14 +371,72 @@ class BaseEngine(ABC):
                 if ts in index_sets[c]:
                     self.on_bar(c, data_map[c].loc[ts], ts)
 
+            # a2. Portfolio-level circuit breaker
+            if self.portfolio_stop_pct > 0:
+                current_eq = self._calc_equity(close_df, ts)
+                self._portfolio_peak = max(self._portfolio_peak, current_eq)
+                port_dd = (current_eq - self._portfolio_peak) / self._portfolio_peak
+                if not self._circuit_breaker_active and port_dd <= -self.portfolio_stop_pct:
+                    # Trigger: close all positions
+                    self._circuit_breaker_active = True
+                    for sym in list(self.positions.keys()):
+                        cp = self._safe_price(close_df, ts, sym, self.positions[sym].entry_price)
+                        if ts in index_sets.get(sym, set()):
+                            bar_data = data_map[sym].loc[ts]
+                            exit_price = self.apply_slippage(
+                                float(bar_data.get("open", cp)),
+                                -self.positions[sym].direction,
+                            )
+                        else:
+                            exit_price = cp
+                        self._close_position(sym, exit_price, ts, "circuit_breaker")
+                        self._peak_prices.pop(sym, None)
+                        self._entry_prices.pop(sym, None)
+                elif self._circuit_breaker_active:
+                    # Check if we've recovered enough to resume
+                    recovery = self.portfolio_recovery_pct or (self.portfolio_stop_pct * 0.5)
+                    if port_dd > -recovery:
+                        self._circuit_breaker_active = False
+
+            # a3. Trailing-stop exit check (per position)
+            if self.trailing_stop_pct > 0:
+                for sym in list(self.positions.keys()):
+                    cp = self._safe_price(close_df, ts, sym, self.positions[sym].entry_price)
+                    # Update peak price
+                    if sym not in self._peak_prices:
+                        self._peak_prices[sym] = cp
+                    else:
+                        self._peak_prices[sym] = max(self._peak_prices[sym], cp)
+                    # Only activate trailing stop after position has gained minimum profit
+                    entry = self._entry_prices.get(sym, self.positions[sym].entry_price)
+                    gain_from_entry = (cp - entry) / entry if entry > 0 else 0
+                    if self.trailing_stop_activation > 0 and gain_from_entry < self.trailing_stop_activation:
+                        continue  # Not yet profitable enough to trail
+                    # Check drawdown from peak
+                    peak = self._peak_prices[sym]
+                    if peak > 0 and (cp - peak) / peak <= -self.trailing_stop_pct:
+                        # Use open price if available for more realistic exit
+                        if ts in index_sets.get(sym, set()):
+                            bar_data = data_map[sym].loc[ts]
+                            exit_price = self.apply_slippage(
+                                float(bar_data.get("open", cp)),
+                                -self.positions[sym].direction,
+                            )
+                        else:
+                            exit_price = cp
+                        self._close_position(sym, exit_price, ts, "trailing_stop")
+                        self._peak_prices.pop(sym, None)
+
             # b. Rebalance each symbol to target weight
-            equity = self._calc_equity(close_df, ts)
-            row = target_values[i]
-            for j, c in enumerate(codes):
-                try:
-                    self._rebalance(c, float(row[j]), data_map.get(c), ts, equity)
-                except Exception as exc:
-                    logger.warning("Rebalance failed for %s at %s: %s", c, ts, exc)
+            #    Skip if circuit breaker is active (stay in cash)
+            if not self._circuit_breaker_active:
+                equity = self._calc_equity(close_df, ts)
+                row = target_values[i]
+                for j, c in enumerate(codes):
+                    try:
+                        self._rebalance(c, float(row[j]), data_map.get(c), ts, equity)
+                    except Exception as exc:
+                        logger.warning("Rebalance failed for %s at %s: %s", c, ts, exc)
 
             # c. Record equity snapshot (recompute after rebalancing)
             snap_equity = self._calc_equity(close_df, ts)
@@ -471,6 +545,9 @@ class BaseEngine(ABC):
                 entry_bar_idx=self._bar_idx,
                 entry_commission=comm,
             )
+            # Initialize peak price and entry price tracking for trailing stop
+            self._peak_prices[symbol] = slipped
+            self._entry_prices[symbol] = slipped
 
     def _close_position(
         self,
@@ -491,6 +568,8 @@ class BaseEngine(ABC):
         exit_comm = self.calc_commission(pos.size, exit_price, pos.direction, is_open=False)
 
         self.capital += margin + pnl - exit_comm
+        self._peak_prices.pop(symbol, None)  # clean up trailing-stop tracker
+        self._entry_prices.pop(symbol, None)
 
         holding_bars = max(self._bar_idx - pos.entry_bar_idx, 0)
 

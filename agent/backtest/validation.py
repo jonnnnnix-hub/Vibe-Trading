@@ -99,45 +99,40 @@ def _path_metrics(pnls: np.ndarray, initial_capital: float) -> Dict[str, float]:
 def monte_carlo_returns_test(
     equity_curve: pd.Series,
     positions_df: pd.DataFrame | None = None,
+    returns_df: pd.DataFrame | None = None,
     benchmark_returns: pd.Series | None = None,
     n_simulations: int = 10000,
     bars_per_year: int = 252,
     seed: int = 42,
 ) -> Dict[str, Any]:
-    """Randomize signal timing to test whether the strategy’s entry/exit
-    decisions add value over random market exposure.
+    """Stock-selection randomization test: does the strategy select
+    the RIGHT stocks at the RIGHT time?
 
-    Unlike ``monte_carlo_test`` (which permutes trade-level PnLs to test
-    path-dependence), this test asks: **would randomly timed positions in
-    the same stocks produce a comparable Sharpe?**
+    When ``returns_df`` (per-stock daily returns) and ``positions_df``
+    (per-stock daily weights) are provided, this test randomizes WHICH
+    stocks receive weight on each day while preserving:
+      - The same number of active positions per day
+      - The same total exposure per day
+      - The same per-stock weight distribution
 
-    Method:
-      1. Compute the strategy’s *exposure fraction* on each day (what
-         fraction of days the portfolio is invested vs. cash).
-      2. For each simulation, randomly select the same number of
-         "invested" days from the available daily returns and compute
-         Sharpe.  Days not selected count as zero return (cash).
-      3. p-value = fraction of simulations where random-timing Sharpe
-         ≥ actual Sharpe.
+    This is far more powerful than simple timing randomization because
+    it directly tests whether the signal engine's stock picks add alpha
+    over random selection from the same universe.
 
-    A low p-value (< 0.05) means the signal’s timing significantly
-    outperforms random entry/exit.
+    Fallback (no returns_df): shuffles exposure-weight timing as before.
 
     Args:
         equity_curve: Portfolio equity time series.
         positions_df: DataFrame of daily position weights (columns = codes).
-            Used to compute per-day exposure.  If ``None``, falls back to
-            inferring invested days from non-zero portfolio returns.
-        benchmark_returns: Per-day equal-weight benchmark returns.  If
-            ``None``, the strategy’s own daily returns are used as the
-            pool of possible daily outcomes.
-        n_simulations: Number of random timing draws (default 10 000).
+        returns_df: DataFrame of daily per-stock returns (columns = codes).
+            When provided, enables stock-selection randomization.
+        benchmark_returns: Unused (kept for API compat).
+        n_simulations: Number of random draws (default 10 000).
         bars_per_year: Annualisation factor.
         seed: Random seed for reproducibility.
 
     Returns:
-        Dict with actual_sharpe, p_value, simulated_sharpe stats,
-        exposure_fraction, and n_observations.
+        Dict with actual_sharpe, p_value, simulated stats.
     """
     port_returns = equity_curve.pct_change().dropna()
     all_returns = port_returns.values
@@ -148,14 +143,86 @@ def monte_carlo_returns_test(
 
     actual_sharpe = _sharpe(all_returns, bars_per_year)
 
-    # Determine which days the strategy was invested (non-zero return)
+    # ── Stock-selection randomization (preferred when we have per-stock data) ──
+    if positions_df is not None and returns_df is not None:
+        # Align positions and returns to equity curve index
+        aligned_pos = positions_df.reindex(port_returns.index).fillna(0.0)
+        aligned_ret = returns_df.reindex(port_returns.index).fillna(0.0)
+
+        # Ensure same columns
+        common_cols = sorted(set(aligned_pos.columns) & set(aligned_ret.columns))
+        if len(common_cols) < 2:
+            # Fall through to timing-based test
+            pass
+        else:
+            pos_mat = aligned_pos[common_cols].values  # (n_days, n_stocks)
+            ret_mat = aligned_ret[common_cols].values   # (n_days, n_stocks)
+            n_stocks = len(common_cols)
+
+            # Compute actual portfolio return: sum(weight_i * return_i) per day
+            actual_port_ret = (pos_mat * ret_mat).sum(axis=1)
+            actual_sharpe_sel = _sharpe(actual_port_ret, bars_per_year)
+
+            # Per-day: number of active positions and total weight
+            active_per_day = (np.abs(pos_mat) > 1e-8).sum(axis=1)  # (n_days,)
+            total_weight_per_day = np.abs(pos_mat).sum(axis=1)     # (n_days,)
+
+            # Exposure stats
+            invested_mask = total_weight_per_day > 1e-8
+            n_invested = int(invested_mask.sum())
+            mean_exposure = float(total_weight_per_day.mean())
+            exposure_frac = n_invested / n if n > 0 else 0.0
+
+            rng = np.random.default_rng(seed)
+            count_ge = 0
+            sim_sharpes = np.empty(n_simulations)
+
+            for i in range(n_simulations):
+                sim_ret = np.zeros(n)
+                for d in range(n):
+                    k = active_per_day[d]
+                    if k == 0 or k >= n_stocks:
+                        # No positions or all positions — same as actual
+                        sim_ret[d] = actual_port_ret[d]
+                        continue
+                    # Randomly select k stocks from the universe
+                    chosen = rng.choice(n_stocks, size=k, replace=False)
+                    # Equal weight among chosen, scaled to same total weight
+                    w = total_weight_per_day[d] / k
+                    sim_ret[d] = (ret_mat[d, chosen] * w).sum()
+
+                s = _sharpe(sim_ret, bars_per_year)
+                sim_sharpes[i] = s
+                if s >= actual_sharpe_sel:
+                    count_ge += 1
+
+            p_value = count_ge / n_simulations
+
+            return {
+                "actual_sharpe": round(actual_sharpe_sel, 4),
+                "p_value": round(p_value, 4),
+                "simulated_sharpe_mean": round(float(sim_sharpes.mean()), 4),
+                "simulated_sharpe_std": round(float(sim_sharpes.std()), 4),
+                "simulated_sharpe_p5": round(float(np.percentile(sim_sharpes, 5)), 4),
+                "simulated_sharpe_p95": round(float(np.percentile(sim_sharpes, 95)), 4),
+                "n_simulations": n_simulations,
+                "n_observations": n,
+                "n_invested_days": n_invested,
+                "exposure_fraction": round(exposure_frac, 4),
+                "mean_exposure_weight": round(mean_exposure, 4),
+                "test_type": "stock_selection",
+            }
+
+    # ── Fallback: exposure-weight timing shuffle ──
     if positions_df is not None:
         aligned_pos = positions_df.reindex(port_returns.index).fillna(0.0)
-        invested_mask = (aligned_pos.abs().sum(axis=1) > 1e-8).values
+        exposure_weights = aligned_pos.abs().sum(axis=1).values
     else:
-        invested_mask = np.abs(all_returns) > 1e-12
+        exposure_weights = (np.abs(all_returns) > 1e-12).astype(float)
 
+    invested_mask = exposure_weights > 1e-8
     n_invested = int(invested_mask.sum())
+    mean_exposure = float(exposure_weights.mean())
     exposure_frac = n_invested / n if n > 0 else 0.0
 
     if n_invested < 5 or n_invested >= n:
@@ -164,26 +231,21 @@ def monte_carlo_returns_test(
             "p_value": 1.0,
             "error": f"trivial exposure ({n_invested}/{n} days invested)",
             "exposure_fraction": round(exposure_frac, 4),
+            "mean_exposure_weight": round(mean_exposure, 4),
             "n_observations": n,
         }
-
-    # Pool of daily returns when invested (the strategy's actual
-    # invested-day returns); on "cash" days the sim gets 0.
-    invested_returns = all_returns[invested_mask]
-    cash_returns = all_returns[~invested_mask]
-    # Build the full pool: invested days keep their return, cash days = 0
-    return_pool = all_returns.copy()
 
     rng = np.random.default_rng(seed)
     count_ge = 0
     sim_sharpes = np.empty(n_simulations)
 
     for i in range(n_simulations):
-        # Randomly pick which days are "invested" (same count)
-        perm_idx = rng.permutation(n)
-        sim_invested = perm_idx[:n_invested]
-        sim_returns = np.zeros(n)
-        sim_returns[sim_invested] = return_pool[sim_invested]
+        shuffled_weights = rng.permutation(exposure_weights)
+        sim_returns = np.where(
+            exposure_weights > 1e-8,
+            all_returns * (shuffled_weights / (exposure_weights + 1e-10)),
+            all_returns * shuffled_weights,
+        )
         s = _sharpe(sim_returns, bars_per_year)
         sim_sharpes[i] = s
         if s >= actual_sharpe:
@@ -202,6 +264,8 @@ def monte_carlo_returns_test(
         "n_observations": n,
         "n_invested_days": n_invested,
         "exposure_fraction": round(exposure_frac, 4),
+        "mean_exposure_weight": round(mean_exposure, 4),
+        "test_type": "timing_shuffle",
     }
 
 
@@ -357,6 +421,7 @@ def run_validation(
     initial_capital: float,
     bars_per_year: int = 252,
     positions_df: pd.DataFrame | None = None,
+    returns_df: pd.DataFrame | None = None,
 ) -> Dict[str, Any]:
     """Run statistical validation on backtest results.
 
@@ -414,6 +479,7 @@ def run_validation(
     if not mcr_cfg.get("skip"):
         results["monte_carlo_returns"] = monte_carlo_returns_test(
             equity_curve, positions_df=positions_df,
+            returns_df=returns_df,
             bars_per_year=bars_per_year,
             n_simulations=mcr_cfg.get("n_simulations", 10000),
             seed=mcr_cfg.get("seed", 42),

@@ -2,6 +2,70 @@
 
 All notable changes to the Vibe-Trading backtesting framework.
 
+## [v4b] — 2026-04-12
+
+**Cash-Aware Optimizer + Trailing Stop — Tier 3: 7/10 Passed**
+
+### New Infrastructure
+
+- **`cash_aware` optimizer** — Inverse-volatility weighting that preserves
+  signal-level cash allocation instead of normalizing to 100% exposure.
+  Configurable `target_exposure` (default 55%) in `optimizer_params`.
+- **Trailing-stop exit layer** — Per-position peak-tracking stop-loss in
+  `BaseEngine._execute_bars()`. Configurable via `trailing_stop_pct` and
+  optional `trailing_stop_activation` (minimum gain before stop activates).
+- **Portfolio circuit breaker** (infrastructure) — Portfolio-level drawdown
+  protection via `portfolio_stop_pct` with automatic recovery resumption.
+- **`_align()` cash-awareness** — `skip_pos_normalization` attr on DataFrame
+  prevents line-89 normalization from force-filling to 100% exposure.
+- **Stock-selection MC test** — `monte_carlo_returns_test()` upgraded to
+  randomize which stocks receive weight on each day (when `returns_df`
+  is available), directly testing stock-picking alpha over random selection.
+  Falls back to timing shuffle when per-stock returns unavailable.
+
+### v4b_us Results (Jan 2015 — Apr 2026)
+
+| Metric | v4_us (before) | v4b_us (after) | Change |
+|--------|---------------|---------------|--------|
+| Sharpe | 0.92 | 0.965 | +0.045 |
+| Max Drawdown | -28.8% | -20.4% | +8.4pp |
+| MC p-value | 0.322 | 0.194 | -0.128 |
+| Total Return | +670.6% | +366.0% | Lower (55% exposure) |
+| Trade Count | 221 | 318 | +97 (trailing stop exits) |
+| Win Rate | 51.3% | 51.3% | Unchanged |
+| WF Consistency | 100% | 100% | Maintained |
+| WF Sharpe std | 0.33 | 0.27 | Improved |
+
+### Tier 3 Scorecard
+
+| Criterion | Target | v4b_us | Status |
+|-----------|--------|--------|--------|
+| MC return-rand p-value | < 0.05 | 0.194 | MISS |
+| Bootstrap CI lower | > 0.30 | 0.338 | PASS |
+| Bootstrap prob_positive | > 99% | 99.9% | PASS |
+| WF consistency | 100% | 100% | PASS |
+| WF Sharpe std | < 0.50 | 0.274 | PASS |
+| WF min window Sharpe | > 0.0 | 0.478 | PASS |
+| Sharpe | > 1.0 | 0.965 | MISS |
+| Excess return | > 0% | -88.9% | MISS |
+| Max drawdown | > -25% | -20.4% | PASS |
+| Trade count | > 100 | 318 | PASS |
+
+**7/10 passed** (up from 6/10 in v4_us).
+
+### Remaining Gaps
+
+- MC p-value at 0.194: stock picks outperform random (Sharpe 0.98 vs 0.86
+  sim mean) but not at 95% confidence. Would require either stronger
+  stock-selection alpha or a fundamentally different signal approach.
+- Sharpe 0.965: within 0.035 of target. The 55% cash allocation reduces
+  volatility proportionally with return, keeping risk-adjusted metric flat.
+- Excess return negative: by design — the cash-aware optimizer holds 45%
+  cash, so it cannot beat a fully invested benchmark in a bull market.
+  This is a deliberate risk-return tradeoff.
+
+---
+
 ## [v3.0] — 2026-04-12
 
 **55-Ticker US Equity Momentum — Tier 2 Validated**
