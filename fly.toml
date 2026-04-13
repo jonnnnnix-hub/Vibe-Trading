@@ -1,0 +1,40 @@
+# fly.toml — Vibe-Trading on Fly.io
+# Deploy: flyctl deploy --remote-only
+
+app = "vibe-trading"
+primary_region = "lax"
+
+[build]
+
+[env]
+  PORT = "8899"
+  ENABLE_SESSION_RUNTIME = "true"
+
+[http_service]
+  internal_port = 8899
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[http_service.concurrency]
+  type = "requests"
+  hard_limit = 50
+  soft_limit = 25
+
+[[http_service.checks]]
+  grace_period = "30s"
+  interval = "30s"
+  method = "GET"
+  path = "/health"
+  timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-2x"
+  memory = "1024mb"
+  processes = ["app"]
+
+[mounts]
+  source = "vibe_data"
+  destination = "/app/agent/runs"
