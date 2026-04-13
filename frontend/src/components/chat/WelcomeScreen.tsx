@@ -176,7 +176,7 @@ export function WelcomeScreen({ onExample }: Props) {
               backdropFilter: "blur(12px)",
               WebkitBackdropFilter: "blur(12px)",
               border: "1px solid rgba(30,32,53,0.7)",
-              color: "hsl(var(--muted-foreground))",
+              color: "hsl(233 22% 78%)",
             }}
             onMouseEnter={e => {
               const el = e.currentTarget as HTMLElement;
@@ -186,7 +186,7 @@ export function WelcomeScreen({ onExample }: Props) {
             onMouseLeave={e => {
               const el = e.currentTarget as HTMLElement;
               el.style.borderColor = "rgba(30,32,53,0.7)";
-              el.style.color = "hsl(var(--muted-foreground))";
+              el.style.color = "hsl(233 22% 78%)";
             }}
           >
             {chip}
@@ -196,7 +196,7 @@ export function WelcomeScreen({ onExample }: Props) {
 
       {/* ── Example category grid ── */}
       <div className="w-full max-w-2xl text-left space-y-4">
-        <p className="text-[11px] uppercase tracking-widest text-muted-foreground/50 font-medium px-1">
+        <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium px-1">
           {t.examples}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -205,7 +205,7 @@ export function WelcomeScreen({ onExample }: Props) {
               key={cat.label}
               className="rounded-2xl overflow-hidden"
               style={{
-                background: "rgba(10,11,16,0.5)",
+                background: "rgba(15,17,23,0.7)",
                 backdropFilter: "blur(16px)",
                 WebkitBackdropFilter: "blur(16px)",
                 border: "1px solid rgba(30,32,53,0.6)",
@@ -260,7 +260,7 @@ export function WelcomeScreen({ onExample }: Props) {
                     </span>
                     <span
                       className="block text-[11px] mt-0.5 leading-snug"
-                      style={{ color: "hsl(var(--muted-foreground))" }}
+                      style={{ color: "hsl(230 14% 72%)" }}
                     >
                       {ex.desc}
                     </span>

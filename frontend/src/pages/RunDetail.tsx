@@ -96,7 +96,7 @@ export function RunDetail() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="p-1.5 rounded-xl hover:bg-[#0F1117] transition-all duration-200 text-[#4A4E68] hover:text-[#E8E9F0] border border-transparent hover:border-[#1E2035]/50"
+            className="p-1.5 rounded-xl hover:bg-[#0F1117] transition-all duration-200 text-[#6B7080] hover:text-[#E8E9F0] border border-transparent hover:border-[#1E2035]/50"
             title="Go back"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -176,7 +176,7 @@ function ChartTab({ run }: { run: RunData }) {
     return (
       <div className="p-8 text-center space-y-2">
         <p className="text-sm text-[#8B8FA3]">No chart data available</p>
-        <p className="text-xs text-[#4A4E68]">The backtest engine may not have generated price data. Check the artifacts/ directory.</p>
+        <p className="text-xs text-[#6B7080]">The backtest engine may not have generated price data. Check the artifacts/ directory.</p>
       </div>
     );
   }
@@ -210,12 +210,12 @@ function TradesTab({ run }: { run: RunData }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#1E2035]/50 bg-[#0F1117]">
-              <th className="py-3 px-4 text-left text-xs text-[#4A4E68] font-medium uppercase tracking-wide">Time</th>
-              <th className="py-3 px-4 text-left text-xs text-[#4A4E68] font-medium uppercase tracking-wide">Code</th>
-              <th className="py-3 px-4 text-left text-xs text-[#4A4E68] font-medium uppercase tracking-wide">Side</th>
-              <th className="py-3 px-4 text-left text-xs text-[#4A4E68] font-medium uppercase tracking-wide">Price</th>
-              <th className="py-3 px-4 text-left text-xs text-[#4A4E68] font-medium uppercase tracking-wide">Qty</th>
-              <th className="py-3 px-4 text-left text-xs text-[#4A4E68] font-medium uppercase tracking-wide">Reason</th>
+              <th className="py-3 px-4 text-left text-xs text-[#8B8FA3] font-medium uppercase tracking-wide">Time</th>
+              <th className="py-3 px-4 text-left text-xs text-[#8B8FA3] font-medium uppercase tracking-wide">Code</th>
+              <th className="py-3 px-4 text-left text-xs text-[#8B8FA3] font-medium uppercase tracking-wide">Side</th>
+              <th className="py-3 px-4 text-left text-xs text-[#8B8FA3] font-medium uppercase tracking-wide">Price</th>
+              <th className="py-3 px-4 text-left text-xs text-[#8B8FA3] font-medium uppercase tracking-wide">Qty</th>
+              <th className="py-3 px-4 text-left text-xs text-[#8B8FA3] font-medium uppercase tracking-wide">Reason</th>
             </tr>
           </thead>
           <tbody>

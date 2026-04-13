@@ -22,7 +22,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="absolute top-2 right-2 p-1.5 rounded-lg bg-[#161822]/80 hover:bg-[#161822] text-[#4A4E68] hover:text-[#8B8FA3] opacity-0 group-hover:opacity-100 transition-all duration-200"
+      className="absolute top-2 right-2 p-1.5 rounded-lg bg-[#161822]/80 hover:bg-[#161822] text-[#6B7080] hover:text-[#8B8FA3] opacity-0 group-hover:opacity-100 transition-all duration-200"
       title={copied ? "Copied" : "Copy"}
     >
       {copied ? <Check className="h-3.5 w-3.5 text-[#34D399]" /> : <Copy className="h-3.5 w-3.5" />}
@@ -81,7 +81,7 @@ export const MessageBubble = memo(function MessageBubble({ msg, onRetry }: Props
               <ReactMarkdown remarkPlugins={remarkPlugins} rehypePlugins={rehypePlugins}>{msg.content}</ReactMarkdown>
             </div>
           </div>
-          {ts && <span className="text-[9px] text-[#4A4E68] mt-1 block opacity-0 group-hover:opacity-100 transition-opacity duration-200">{ts}</span>}
+          {ts && <span className="text-[9px] text-[#6B7080] mt-1 block opacity-0 group-hover:opacity-100 transition-opacity duration-200">{ts}</span>}
         </div>
       </div>
     );
@@ -104,7 +104,7 @@ export const MessageBubble = memo(function MessageBubble({ msg, onRetry }: Props
           {onRetry && (
             <button
               onClick={() => onRetry(msg)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-[#8B8FA3] hover:text-[#E8E9F0] hover:bg-[#0F1117] border border-transparent hover:border-[#1E2035]/50 transition-all duration-200"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-[#A0A4B8] hover:text-[#E8E9F0] hover:bg-[#0F1117] border border-transparent hover:border-[#1E2035]/50 transition-all duration-200"
               title={hint}
             >
               <RefreshCw className="h-3 w-3" />
@@ -121,7 +121,7 @@ export const MessageBubble = memo(function MessageBubble({ msg, onRetry }: Props
     return (
       <div className="flex gap-3">
         <AgentAvatar />
-        <p className="text-sm text-[#8B8FA3] leading-relaxed">{msg.content}</p>
+        <p className="text-sm text-[#A0A4B8] leading-relaxed">{msg.content}</p>
       </div>
     );
   }

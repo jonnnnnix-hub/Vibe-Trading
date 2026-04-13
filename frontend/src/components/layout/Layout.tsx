@@ -195,7 +195,7 @@ export function Layout() {
           <div className="flex-1 overflow-hidden flex flex-col min-h-0 mt-2">
             {/* Section header */}
             <div className="flex items-center justify-between px-3 py-2 shrink-0">
-              <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">
+              <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
                 <MessageSquare className="h-3 w-3" />
                 {t.sessions}
               </span>
@@ -224,7 +224,7 @@ export function Layout() {
                   ))}
                 </div>
               ) : sessions.length === 0 ? (
-                <p className="px-3 py-2 text-xs text-muted-foreground/40 italic">{t.noSessions}</p>
+                <p className="px-3 py-2 text-xs text-muted-foreground/70 italic">{t.noSessions}</p>
               ) : null}
 
               {sessions.map((s) => {

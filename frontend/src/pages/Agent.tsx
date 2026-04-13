@@ -769,7 +769,7 @@ export function Agent() {
                 type="button"
                 onClick={() => setShowUploadMenu(prev => !prev)}
                 disabled={status === "streaming" || uploading}
-                className="w-9 h-9 rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/60 flex items-center justify-center text-[#4A4E68] hover:text-[#F0A050] hover:border-[#F0A050]/30 hover:bg-[#F0A050]/5 transition-all duration-200 disabled:opacity-40 shrink-0 backdrop-blur-sm"
+                className="w-9 h-9 rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/60 flex items-center justify-center text-[#6B7080] hover:text-[#F0A050] hover:border-[#F0A050]/30 hover:bg-[#F0A050]/5 transition-all duration-200 disabled:opacity-40 shrink-0 backdrop-blur-sm"
                 title="More options"
               >
                 <Plus className="h-4 w-4" />
@@ -824,14 +824,14 @@ export function Agent() {
                 }
               }}
               placeholder={t.prompt}
-              className="flex-1 px-4 py-2.5 rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/60 backdrop-blur-sm text-sm text-[#E8E9F0] placeholder:text-[#4A4E68] focus:outline-none focus:border-[#F0A050]/40 focus:ring-2 focus:ring-[#F0A050]/15 focus:shadow-[0_0_0_2px_rgba(240,160,80,0.1)] transition-all duration-200 resize-none max-h-32 overflow-y-auto"
+              className="flex-1 px-4 py-2.5 rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/60 backdrop-blur-sm text-sm text-[#E8E9F0] placeholder:text-[#6B7080] focus:outline-none focus:border-[#F0A050]/40 focus:ring-2 focus:ring-[#F0A050]/15 focus:shadow-[0_0_0_2px_rgba(240,160,80,0.1)] transition-all duration-200 resize-none max-h-32 overflow-y-auto"
               disabled={status === "streaming"}
             />
             {messages.length > 0 && (
               <button
                 type="button"
                 onClick={handleExport}
-                className="w-9 h-9 rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/60 flex items-center justify-center text-[#4A4E68] hover:text-[#8B8FA3] hover:bg-[#0F1117] transition-all duration-200 backdrop-blur-sm"
+                className="w-9 h-9 rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/60 flex items-center justify-center text-[#6B7080] hover:text-[#8B8FA3] hover:bg-[#0F1117] transition-all duration-200 backdrop-blur-sm"
                 title="Export chat"
               >
                 <Download className="h-4 w-4" />

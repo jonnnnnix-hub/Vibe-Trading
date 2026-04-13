@@ -46,9 +46,9 @@ export function Home() {
             width: "600px",
             height: "600px",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(240,160,80,0.18) 0%, transparent 65%)",
+            background: "radial-gradient(circle, rgba(240,160,80,0.12) 0%, transparent 65%)",
             filter: "blur(60px)",
-            opacity: 0.9,
+            opacity: 0.4,
           }}
         />
         {/* Blue orb — bottom right */}
@@ -63,7 +63,7 @@ export function Home() {
             borderRadius: "50%",
             background: "radial-gradient(circle, rgba(96,165,250,0.14) 0%, transparent 65%)",
             filter: "blur(80px)",
-            opacity: 0.9,
+            opacity: 0.35,
           }}
         />
         {/* Purple orb — center */}
@@ -78,7 +78,7 @@ export function Home() {
             borderRadius: "50%",
             background: "radial-gradient(circle, rgba(167,139,250,0.1) 0%, transparent 70%)",
             filter: "blur(60px)",
-            opacity: 0.8,
+            opacity: 0.3,
           }}
         />
         {/* Subtle grid overlay */}
@@ -87,8 +87,8 @@ export function Home() {
             position: "absolute",
             inset: 0,
             backgroundImage: `
-              linear-gradient(rgba(30,32,53,0.3) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(30,32,53,0.3) 1px, transparent 1px)
+              linear-gradient(rgba(30,32,53,0.12) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(30,32,53,0.12) 1px, transparent 1px)
             `,
             backgroundSize: "48px 48px",
             maskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%)",
@@ -130,7 +130,7 @@ export function Home() {
           >
             {t.heroTitle}
           </h1>
-          <p className="text-lg text-muted-foreground leading-relaxed max-w-lg mx-auto">
+          <p className="text-lg leading-relaxed max-w-lg mx-auto" style={{ color: "hsl(230 14% 72%)" }}>
             {t.heroDesc}
           </p>
         </div>
@@ -217,7 +217,7 @@ export function Home() {
             {/* Text */}
             <div className="space-y-1.5 relative">
               <h3 className="font-semibold text-foreground text-sm leading-snug">{title}</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
+              <p className="text-xs leading-relaxed" style={{ color: "hsl(230 14% 72%)" }}>{desc}</p>
             </div>
           </div>
         ))}

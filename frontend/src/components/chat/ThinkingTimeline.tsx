@@ -85,8 +85,8 @@ export const ThinkingTimeline = memo(function ThinkingTimeline({ messages, isLat
         className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs hover:bg-[#0F1117]/60 transition-colors duration-200"
       >
         {expanded
-          ? <ChevronDown className="h-3 w-3 text-[#4A4E68] shrink-0" />
-          : <ChevronRight className="h-3 w-3 text-[#4A4E68] shrink-0" />}
+          ? <ChevronDown className="h-3 w-3 text-[#6B7080] shrink-0" />
+          : <ChevronRight className="h-3 w-3 text-[#6B7080] shrink-0" />}
         {isRunning ? (
           <span className="relative flex h-3 w-3 shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F0A050]/60 opacity-75" />
@@ -98,7 +98,7 @@ export const ThinkingTimeline = memo(function ThinkingTimeline({ messages, isLat
           <CheckCircle2 className="h-3 w-3 text-[#34D399]/70 shrink-0" />
         )}
         <span className={cn(
-          "text-[#8B8FA3]",
+          "text-[#A0A4B8]",
           isRunning && "text-[#E8E9F0]"
         )}>
           {summaryText}
@@ -108,7 +108,7 @@ export const ThinkingTimeline = memo(function ThinkingTimeline({ messages, isLat
       {/* Thinking preview when running but collapsed */}
       {!expanded && isRunning && latestThinking && (
         <div className="px-3.5 pb-2.5 -mt-1">
-          <p className="text-[11px] text-[#4A4E68] line-clamp-1 pl-8 italic">
+          <p className="text-[11px] text-[#6B7080] line-clamp-1 pl-8 italic">
             {latestThinking.slice(-100)}
           </p>
         </div>
@@ -145,16 +145,16 @@ export const ThinkingTimeline = memo(function ThinkingTimeline({ messages, isLat
                   ? "text-[#E8E9F0]"
                   : step.status === "error"
                   ? "text-[#F87171]"
-                  : "text-[#4A4E68]"
+                  : "text-[#8B8FA3]"
               )}>
                 {step.label}
               </span>
 
               {/* Duration */}
               {step.status === "running" ? (
-                <span className="text-[10px] text-[#F0A050]/60 font-mono">{t.toolRunning}</span>
+                <span className="text-[10px] text-[#F0A050]/70 font-mono">{t.toolRunning}</span>
               ) : step.elapsed_ms != null ? (
-                <span className="text-[10px] text-[#4A4E68] tabular-nums font-mono">{(step.elapsed_ms / 1000).toFixed(1)}s</span>
+                <span className="text-[10px] text-[#6B7080] tabular-nums font-mono">{(step.elapsed_ms / 1000).toFixed(1)}s</span>
               ) : null}
             </div>
           ))}
@@ -164,7 +164,7 @@ export const ThinkingTimeline = memo(function ThinkingTimeline({ messages, isLat
       {/* Expanded: show thinking content if any (for Q&A without tools) */}
       {expanded && steps.length === 0 && latestThinking && (
         <div className="border-t border-[#1E2035]/30 px-3.5 py-2.5">
-          <p className="text-xs text-[#4A4E68] leading-relaxed line-clamp-4 italic">
+          <p className="text-xs text-[#6B7080] leading-relaxed line-clamp-4 italic">
             {latestThinking}
           </p>
         </div>

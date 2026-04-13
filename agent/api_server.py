@@ -1202,6 +1202,163 @@ async def get_paper_trades():
 
 
 # ============================================================================
+# Auto-Trading Bot Endpoints
+# ============================================================================
+
+try:
+    from autobot import get_bot as _get_bot_local
+except ImportError:
+    from agent.autobot import get_bot as _get_bot_local  # type: ignore
+
+get_bot = _get_bot_local
+
+
+class BotConfigureRequest(BaseModel):
+    """Configure the auto-trading bot."""
+    strategy: Optional[str] = Field(None, description="momentum_scanner | expert_committee | aggressive_momentum")
+    watchlist: Optional[List[str]] = Field(None, description="List of ticker symbols to scan")
+    position_size_pct: Optional[float] = Field(None, description="% of portfolio per position (e.g. 5.0)")
+    max_positions: Optional[int] = Field(None, description="Maximum simultaneous positions")
+    config_overrides: Optional[Dict[str, Any]] = Field(None, description="Override config fields directly")
+
+
+@app.get("/bot/status")
+async def bot_status():
+    """Get current bot status, strategy, recent signals, and tracked positions."""
+    try:
+        bot = get_bot()
+        return bot.get_status()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Bot error: {exc}")
+
+
+@app.post("/bot/configure", dependencies=[Depends(require_auth)])
+async def bot_configure(request: BotConfigureRequest):
+    """Configure the auto-trading bot strategy and parameters."""
+    try:
+        bot = get_bot()
+        bot.configure(
+            strategy=request.strategy,
+            watchlist=request.watchlist,
+            position_size_pct=request.position_size_pct,
+            max_positions=request.max_positions,
+            config_overrides=request.config_overrides,
+        )
+        return {"status": "configured", **bot.get_status()}
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Bot configure error: {exc}")
+
+
+@app.post("/bot/start", dependencies=[Depends(require_auth)])
+async def bot_start():
+    """Start the auto-trading bot (marks it as active)."""
+    try:
+        bot = get_bot()
+        bot.start()
+        return bot.get_status()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Bot start error: {exc}")
+
+
+@app.post("/bot/stop", dependencies=[Depends(require_auth)])
+async def bot_stop():
+    """Stop the auto-trading bot."""
+    try:
+        bot = get_bot()
+        bot.stop()
+        return bot.get_status()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Bot stop error: {exc}")
+
+
+@app.post("/bot/scan")
+async def bot_scan():
+    """Run a signal scan on the watchlist without executing any trades.
+
+    Returns BUY signals found for the current strategy.
+    """
+    try:
+        bot = get_bot()
+        watchlist = bot.state.get("watchlist", [])
+        signals = bot.scan_signals()
+        return {
+            "signals": signals,
+            "scanned_at": bot.state.get("last_scan_time"),
+            "symbols_scanned": len(watchlist),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Bot scan error: {exc}")
+
+
+@app.post("/bot/cycle", dependencies=[Depends(require_auth)])
+async def bot_cycle():
+    """Run one full trading cycle: check exits, scan entries, and return actions.
+
+    Exits and entries are returned as action lists. Actual trade execution
+    should be performed by the caller via POST /paper/trade using the returned
+    action data (the bot does NOT call the paper trading endpoint itself to
+    avoid circular server calls — the frontend or a scheduler should do this).
+    """
+    try:
+        bot = get_bot()
+        portfolio = _load_paper_portfolio()
+        if not portfolio:
+            raise HTTPException(
+                status_code=404,
+                detail="No paper portfolio found. Create one first via POST /paper/portfolio.",
+            )
+        result = bot.run_cycle(portfolio)
+        # Reshape to match frontend CycleResult type
+        exits = result.get("exits", [])
+        entries = result.get("entries", [])
+        return {
+            "exits_executed": len(exits),
+            "entries_executed": len(entries),
+            "signals_found": len(entries) + len(result.get("skipped_entries", [])),
+            "cycle_number": result.get("cycle", 0),
+            "timestamp": result.get("timestamp", ""),
+            "details": {
+                "exits": [
+                    {
+                        "symbol": e.get("symbol", ""),
+                        "reason": e.get("reason", ""),
+                        "pnl": e.get("pnl_pct"),
+                    }
+                    for e in exits
+                ],
+                "entries": [
+                    {
+                        "symbol": e.get("symbol", ""),
+                        "qty": e.get("qty", 0),
+                        "price": e.get("price", 0),
+                    }
+                    for e in entries
+                ],
+                "signals": [],
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Bot cycle error: {exc}")
+
+
+@app.get("/bot/signals")
+async def bot_signals(
+    limit: int = Query(50, ge=1, le=500, description="Max number of signals to return"),
+):
+    """Get recent signal history (newest first). Returns SignalEntry[] directly."""
+    try:
+        bot = get_bot()
+        history = bot.state.get("signals_history", [])
+        return list(reversed(history))[:limit]
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Bot signals error: {exc}")
+
+
+# ============================================================================
 # Main Entry Point
 # ============================================================================
 

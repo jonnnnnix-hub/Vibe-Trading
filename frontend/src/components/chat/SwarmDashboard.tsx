@@ -69,7 +69,7 @@ function StatusIcon({ status }: { status: SwarmAgent["status"] }) {
         </span>
       </span>
     );
-    default: return <Clock className="h-3.5 w-3.5 text-[#4A4E68]" />;
+    default: return <Clock className="h-3.5 w-3.5 text-[#6B7080]" />;
   }
 }
 
@@ -79,7 +79,7 @@ function StatusLabel({ status }: { status: SwarmAgent["status"] }) {
     case "done": return <span className="text-[#34D399] font-medium">done</span>;
     case "failed": return <span className="text-[#F87171] font-medium">failed</span>;
     case "retry": return <span className="text-[#F0A050] font-medium">retry</span>;
-    default: return <span className="text-[#4A4E68]">waiting</span>;
+    default: return <span className="text-[#6B7080]">waiting</span>;
   }
 }
 
@@ -124,7 +124,7 @@ export function SwarmDashboard(props: SwarmDashboardProps) {
               {statusBadge.label}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-[#8B8FA3] font-mono">
+          <div className="flex items-center gap-1.5 text-xs text-[#A0A4B8] font-mono">
             <Timer className="h-3 w-3" />
             {formatTime(elapsedTotal)}
           </div>
@@ -162,19 +162,19 @@ export function SwarmDashboard(props: SwarmDashboardProps) {
                   <StatusLabel status={agent.status} />
                 </div>
                 {/* Tool */}
-                <div className="w-28 shrink-0 text-xs text-[#4A4E68] font-mono truncate">
+                <div className="w-28 shrink-0 text-xs text-[#6B7080] font-mono truncate">
                   {agent.tool || "\u2014"}
                 </div>
                 {/* Time */}
-                <div className="w-16 shrink-0 text-xs text-[#8B8FA3] text-right tabular-nums font-mono">
+                <div className="w-16 shrink-0 text-xs text-[#A0A4B8] text-right tabular-nums font-mono">
                   {formatTime(elapsed)}
                 </div>
                 {/* Iters */}
-                <div className="w-10 shrink-0 text-xs text-[#8B8FA3] text-right tabular-nums font-mono">
+                <div className="w-10 shrink-0 text-xs text-[#A0A4B8] text-right tabular-nums font-mono">
                   {agent.iters > 0 ? agent.iters : "\u2014"}
                 </div>
                 {/* Last output */}
-                <div className="flex-1 min-w-0 text-xs text-[#4A4E68] truncate">
+                <div className="flex-1 min-w-0 text-xs text-[#8B8FA3] truncate">
                   {agent.lastText}
                 </div>
               </div>
@@ -190,7 +190,7 @@ export function SwarmDashboard(props: SwarmDashboardProps) {
               style={{ width: `${pct}%` }}
             />
           </div>
-          <span className="text-xs text-[#8B8FA3] tabular-nums w-10 text-right font-mono">{pct}%</span>
+          <span className="text-xs text-[#A0A4B8] tabular-nums w-10 text-right font-mono">{pct}%</span>
         </div>
       </div>
 
@@ -213,7 +213,7 @@ export function SwarmDashboard(props: SwarmDashboardProps) {
                 <div className="text-xs font-semibold mb-1.5 font-mono" style={{ color: accent }}>
                   {agentId}
                 </div>
-                <div className="text-xs text-[#8B8FA3] leading-relaxed whitespace-pre-wrap">
+                <div className="text-xs text-[#A0A4B8] leading-relaxed whitespace-pre-wrap">
                   {preview}
                 </div>
               </div>
@@ -231,8 +231,8 @@ export function SwarmDashboard(props: SwarmDashboardProps) {
           </div>
           <div className="prose prose-sm dark:prose-invert max-w-none
             prose-headings:text-[#E8E9F0]
-            prose-p:text-[#8B8FA3]
-            prose-li:text-[#8B8FA3]
+            prose-p:text-[#A0A4B8]
+            prose-li:text-[#A0A4B8]
             prose-strong:text-[#E8E9F0]
             prose-code:text-[#F0A050] prose-code:bg-[#161822] prose-code:px-1 prose-code:rounded">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{finalReport}</ReactMarkdown>

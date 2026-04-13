@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
-import { RefreshCw, Trash2, TrendingUp, TrendingDown, Wallet, AlertTriangle, Plus } from "lucide-react";
+import { RefreshCw, Trash2, TrendingUp, TrendingDown, Wallet, AlertTriangle, Plus, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api, type PaperPortfolio, type PaperTrade, type PaperPosition } from "@/lib/api";
+import { AutoBotPanel } from "@/components/paper/AutoBotPanel";
 
 // ─── Utility helpers ────────────────────────────────────────────────────────
 
@@ -54,7 +55,7 @@ function StatCard({
         className
       )}
     >
-      <span className="text-xs text-[#8B8FA3] font-medium uppercase tracking-wider">{label}</span>
+      <span className="text-xs text-[#A0A4B8] font-medium uppercase tracking-wider">{label}</span>
       <span
         className={cn(
           "font-mono text-2xl font-bold",
@@ -65,7 +66,7 @@ function StatCard({
       >
         {value}
       </span>
-      {sub && <span className="text-xs text-[#8B8FA3]">{sub}</span>}
+      {sub && <span className="text-xs text-[#A0A4B8]">{sub}</span>}
     </div>
   );
 }
@@ -75,7 +76,7 @@ function PositionsTable({ positions }: { positions: PaperPosition[] }) {
     return (
       <div className="bg-[#0A0B10]/60 backdrop-blur-2xl border border-[#1E2035]/50 rounded-2xl p-6">
         <h2 className="text-sm font-semibold text-[#E8E9F0] mb-4">Open Positions</h2>
-        <p className="text-[#8B8FA3] text-sm text-center py-6">No open positions</p>
+        <p className="text-[#A0A4B8] text-sm text-center py-6">No open positions</p>
       </div>
     );
   }
@@ -88,7 +89,7 @@ function PositionsTable({ positions }: { positions: PaperPosition[] }) {
           <thead>
             <tr className="border-b border-[#1E2035]/50">
               {["Symbol", "Qty", "Avg Price", "Current", "Mkt Value", "P&L", "P&L %"].map((h) => (
-                <th key={h} className="text-left py-2 pr-4 text-xs text-[#8B8FA3] font-medium uppercase tracking-wider last:text-right">
+                <th key={h} className="text-left py-2 pr-4 text-xs text-[#A0A4B8] font-medium uppercase tracking-wider last:text-right">
                   {h}
                 </th>
               ))}
@@ -184,7 +185,7 @@ function TradePanel({ onTrade }: { onTrade: () => void }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Symbol */}
         <div className="relative">
-          <label className="block text-xs text-[#8B8FA3] mb-1.5 font-medium">Symbol</label>
+          <label className="block text-xs text-[#A0A4B8] mb-1.5 font-medium">Symbol</label>
           <input
             value={symbol}
             onChange={(e) => { setSymbol(e.target.value.toUpperCase()); setShowSuggestions(true); }}
@@ -211,7 +212,7 @@ function TradePanel({ onTrade }: { onTrade: () => void }) {
 
         {/* BUY / SELL toggle */}
         <div>
-          <label className="block text-xs text-[#8B8FA3] mb-1.5 font-medium">Side</label>
+          <label className="block text-xs text-[#A0A4B8] mb-1.5 font-medium">Side</label>
           <div className="flex gap-2">
             <button
               type="button"
@@ -242,7 +243,7 @@ function TradePanel({ onTrade }: { onTrade: () => void }) {
 
         {/* Quantity */}
         <div>
-          <label className="block text-xs text-[#8B8FA3] mb-1.5 font-medium">Quantity</label>
+          <label className="block text-xs text-[#A0A4B8] mb-1.5 font-medium">Quantity</label>
           <input
             type="number"
             value={qty}
@@ -256,8 +257,8 @@ function TradePanel({ onTrade }: { onTrade: () => void }) {
 
         {/* Price (optional) */}
         <div>
-          <label className="block text-xs text-[#8B8FA3] mb-1.5 font-medium">
-            Price <span className="text-[#8B8FA3]/60 font-normal">(leave blank for market)</span>
+          <label className="block text-xs text-[#A0A4B8] mb-1.5 font-medium">
+            Price <span className="text-[#A0A4B8]/70 font-normal">(leave blank for market)</span>
           </label>
           <input
             type="number"
@@ -293,14 +294,14 @@ function TradeHistory({ trades }: { trades: PaperTrade[] }) {
     <div className="bg-[#0A0B10]/60 backdrop-blur-2xl border border-[#1E2035]/50 rounded-2xl p-6">
       <h2 className="text-sm font-semibold text-[#E8E9F0] mb-4">Trade History</h2>
       {trades.length === 0 ? (
-        <p className="text-[#8B8FA3] text-sm text-center py-6">No trades yet</p>
+        <p className="text-[#A0A4B8] text-sm text-center py-6">No trades yet</p>
       ) : (
         <div className="overflow-x-auto max-h-72 overflow-y-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-[#0A0B10]">
               <tr className="border-b border-[#1E2035]/50">
                 {["Time", "Symbol", "Side", "Qty", "Price", "Total", "P&L"].map((h) => (
-                  <th key={h} className="text-left py-2 pr-4 text-xs text-[#8B8FA3] font-medium uppercase tracking-wider last:text-right">
+                  <th key={h} className="text-left py-2 pr-4 text-xs text-[#A0A4B8] font-medium uppercase tracking-wider last:text-right">
                     {h}
                   </th>
                 ))}
@@ -319,7 +320,7 @@ function TradeHistory({ trades }: { trades: PaperTrade[] }) {
                       i % 2 === 0 ? "bg-transparent" : "bg-[#0F1117]/30"
                     )}
                   >
-                    <td className="py-2.5 pr-4 text-[#8B8FA3] text-xs whitespace-nowrap">{fmtDate(t.timestamp)}</td>
+                    <td className="py-2.5 pr-4 text-[#A0A4B8] text-xs whitespace-nowrap">{fmtDate(t.timestamp)}</td>
                     <td className="py-2.5 pr-4 font-mono text-[#F0A050] font-semibold">{t.symbol}</td>
                     <td className={cn("py-2.5 pr-4 font-semibold text-xs", isBuy ? "text-[#34D399]" : "text-[#F87171]")}>
                       {t.side}
@@ -369,13 +370,13 @@ function SetupScreen({ onCreate }: { onCreate: (cash: number, name: string) => v
           </div>
           <div>
             <h1 className="text-lg font-bold text-[#E8E9F0]">Paper Trading</h1>
-            <p className="text-xs text-[#8B8FA3]">Simulate trades with virtual cash</p>
+            <p className="text-xs text-[#A0A4B8]">Simulate trades with virtual cash</p>
           </div>
         </div>
 
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
-            <label className="block text-xs text-[#8B8FA3] mb-1.5 font-medium">Portfolio Name</label>
+            <label className="block text-xs text-[#A0A4B8] mb-1.5 font-medium">Portfolio Name</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -383,7 +384,7 @@ function SetupScreen({ onCreate }: { onCreate: (cash: number, name: string) => v
             />
           </div>
           <div>
-            <label className="block text-xs text-[#8B8FA3] mb-1.5 font-medium">Starting Cash (USD)</label>
+            <label className="block text-xs text-[#A0A4B8] mb-1.5 font-medium">Starting Cash (USD)</label>
             <input
               type="number"
               value={cash}
@@ -413,6 +414,7 @@ export function PaperTrading() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [activeTab, setActiveTab] = useState<"portfolio" | "autobot">("portfolio");
 
   const loadPortfolio = useCallback(async (quiet = false) => {
     if (!quiet) setLoading(true);
@@ -499,7 +501,7 @@ export function PaperTrading() {
             </div>
             <div>
               <h1 className="text-lg font-bold text-[#E8E9F0]">{portfolio.name}</h1>
-              <p className="text-xs text-[#8B8FA3]">
+              <p className="text-xs text-[#A0A4B8]">
                 Created {portfolio.created_at ? fmtDate(portfolio.created_at) : "—"}
               </p>
             </div>
@@ -509,7 +511,7 @@ export function PaperTrading() {
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="flex items-center gap-1.5 text-xs text-[#8B8FA3] hover:text-[#E8E9F0] bg-[#0F1117] border border-[#1E2035] rounded-xl px-3 py-2 transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 text-xs text-[#A0A4B8] hover:text-[#E8E9F0] bg-[#0F1117] border border-[#1E2035] rounded-xl px-3 py-2 transition-colors disabled:opacity-50"
             >
               <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />
               Refresh
@@ -578,19 +580,51 @@ export function PaperTrading() {
           </div>
         )}
 
-        {/* ── Main content grid ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Positions + History (left 2/3) */}
-          <div className="lg:col-span-2 space-y-6">
-            <PositionsTable positions={portfolio.positions} />
-            <TradeHistory trades={trades} />
-          </div>
-
-          {/* Trade panel (right 1/3) */}
-          <div className="lg:col-span-1">
-            <TradePanel onTrade={handleRefresh} />
-          </div>
+        {/* ── Tab bar ── */}
+        <div className="flex gap-1 bg-[#0A0B10]/60 backdrop-blur-2xl border border-[#1E2035]/50 rounded-xl p-1 w-fit">
+          <button
+            onClick={() => setActiveTab("portfolio")}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all",
+              activeTab === "portfolio"
+                ? "bg-[#F0A050]/10 text-[#F0A050] border border-[#F0A050]/30"
+                : "text-[#A0A4B8] hover:text-[#E8E9F0] border border-transparent"
+            )}
+          >
+            <Wallet className="h-3.5 w-3.5" />
+            Portfolio
+          </button>
+          <button
+            onClick={() => setActiveTab("autobot")}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all",
+              activeTab === "autobot"
+                ? "bg-[#F0A050]/10 text-[#F0A050] border border-[#F0A050]/30"
+                : "text-[#A0A4B8] hover:text-[#E8E9F0] border border-transparent"
+            )}
+          >
+            <Bot className="h-3.5 w-3.5" />
+            Auto Bot
+          </button>
         </div>
+
+        {/* ── Tab content ── */}
+        {activeTab === "portfolio" ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Positions + History (left 2/3) */}
+            <div className="lg:col-span-2 space-y-6">
+              <PositionsTable positions={portfolio.positions} />
+              <TradeHistory trades={trades} />
+            </div>
+
+            {/* Trade panel (right 1/3) */}
+            <div className="lg:col-span-1">
+              <TradePanel onTrade={handleRefresh} />
+            </div>
+          </div>
+        ) : (
+          <AutoBotPanel portfolio={portfolio} onRefresh={handleRefresh} />
+        )}
       </div>
     </div>
   );

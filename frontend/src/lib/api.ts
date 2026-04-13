@@ -62,6 +62,16 @@ export const api = {
   getPaperTrades: () => request<PaperTrade[]>("/paper/trades"),
   resetPaperPortfolio: () => request<{ status: string }>("/paper/portfolio", { method: "DELETE" }),
 
+  // Auto-Trading Bot
+  getBotStatus: () => request<BotStatus>("/bot/status"),
+  configurBot: (config: BotConfig) =>
+    request<BotStatus>("/bot/configure", { method: "POST", body: JSON.stringify(config) }),
+  startBot: () => request<BotStatus>("/bot/start", { method: "POST" }),
+  stopBot: () => request<BotStatus>("/bot/stop", { method: "POST" }),
+  scanSignals: () => request<ScanResult>("/bot/scan", { method: "POST" }),
+  runCycle: () => request<CycleResult>("/bot/cycle", { method: "POST" }),
+  getBotSignals: () => request<SignalEntry[]>("/bot/signals"),
+
   // Swarm API
   listSwarmPresets: () => request<SwarmPreset[]>("/swarm/presets"),
   createSwarmRun: (preset_name: string, user_vars: Record<string, string>) =>
@@ -280,6 +290,63 @@ export interface PaperPortfolio {
 
 export interface PaperTradeResult extends PaperTrade {
   portfolio_after: PaperPortfolio;
+}
+
+// --- Auto-Trading Bot types ---
+
+export interface BotStatus {
+  active: boolean;
+  strategy: string;
+  watchlist: string[];
+  position_size_pct: number;
+  max_positions: number;
+  last_scan_time: string | null;
+  cycle_count: number;
+  total_signals_generated: number;
+  total_trades_executed: number;
+  config: {
+    target_pct: number;
+    trailing_activation: number;
+    trailing_distance: number;
+    hard_stop_pct: number | null;
+    max_hold_days: number;
+    min_hold_days: number;
+  };
+}
+
+export interface BotConfig {
+  strategy: string;
+  watchlist: string[];
+  position_size_pct?: number;
+  max_positions?: number;
+}
+
+export interface SignalEntry {
+  symbol: string;
+  signal: string;
+  strategy: string;
+  score?: number;
+  details?: Record<string, any>;
+  timestamp: string;
+}
+
+export interface ScanResult {
+  signals: SignalEntry[];
+  scanned_at: string;
+  symbols_scanned: number;
+}
+
+export interface CycleResult {
+  exits_executed: number;
+  entries_executed: number;
+  signals_found: number;
+  details: {
+    exits: Array<{symbol: string; reason: string; pnl?: number}>;
+    entries: Array<{symbol: string; qty: number; price: number}>;
+    signals: SignalEntry[];
+  };
+  cycle_number: number;
+  timestamp: string;
 }
 
 export interface MessageItem {

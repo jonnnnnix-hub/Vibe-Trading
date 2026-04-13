@@ -34,7 +34,7 @@ export const MetricsCard = memo(function MetricsCard({ metrics, compact = false 
           key={k}
           className="text-center py-2.5 px-2 bg-[#0A0B10]/60 backdrop-blur-2xl"
         >
-          <p className="text-[10px] text-[#4A4E68] uppercase tracking-widest font-medium mb-0.5">
+          <p className="text-[10px] text-[#7A7F96] uppercase tracking-widest font-medium mb-0.5">
             {getMetricLabel(k, t as unknown as Record<string, string>)}
           </p>
           <p className={cn(

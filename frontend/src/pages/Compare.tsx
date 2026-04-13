@@ -266,7 +266,7 @@ export function Compare() {
           </select>
         </div>
         <div className="mb-3 shrink-0">
-          <ArrowRight className="h-5 w-5 text-[#4A4E68]" />
+          <ArrowRight className="h-5 w-5 text-[#6B7080]" />
         </div>
         <div className="flex-1">
           <label className="text-xs text-[#8B8FA3] block mb-1.5 font-medium uppercase tracking-wide">{t.compareTo}</label>
@@ -301,10 +301,10 @@ export function Compare() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#1E2035]/50 bg-[#0F1117]">
-                <th className="text-left px-4 py-3 text-xs text-[#4A4E68] font-medium uppercase tracking-wide">{t.metric}</th>
-                <th className="text-right px-4 py-3 text-xs text-[#4A4E68] font-medium uppercase tracking-wide">{t.baseline}</th>
-                <th className="text-right px-4 py-3 text-xs text-[#4A4E68] font-medium uppercase tracking-wide">{t.compareTo}</th>
-                <th className="text-right px-4 py-3 text-xs text-[#4A4E68] font-medium uppercase tracking-wide">{t.delta}</th>
+                <th className="text-left px-4 py-3 text-xs text-[#8B8FA3] font-medium uppercase tracking-wide">{t.metric}</th>
+                <th className="text-right px-4 py-3 text-xs text-[#8B8FA3] font-medium uppercase tracking-wide">{t.baseline}</th>
+                <th className="text-right px-4 py-3 text-xs text-[#8B8FA3] font-medium uppercase tracking-wide">{t.compareTo}</th>
+                <th className="text-right px-4 py-3 text-xs text-[#8B8FA3] font-medium uppercase tracking-wide">{t.delta}</th>
               </tr>
             </thead>
             <tbody>
@@ -354,7 +354,7 @@ export function Compare() {
             {/* Ambient glow */}
             <div className="absolute inset-0 blur-2xl bg-[#F0A050]/5 rounded-full scale-150" />
           </div>
-          <p className="text-sm text-[#4A4E68]">{t.selectTwoRuns}</p>
+          <p className="text-sm text-[#8B8FA3]">{t.selectTwoRuns}</p>
         </div>
       )}
     </div>
