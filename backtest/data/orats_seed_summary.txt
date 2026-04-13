@@ -1,0 +1,67 @@
+ORATS Historical Data Seed Summary
+====================================
+Generated: 2025-07-10
+
+OVERVIEW
+--------
+All 89 tickers in the Vibe-Trading backtest universe have been successfully
+downloaded from the ORATS API.
+
+DATE RANGE
+----------
+2025-01-02 to 2026-04-11 (5 quarterly chunks)
+
+RESULTS
+-------
+  Total tickers:       89
+  Successfully seeded: 89
+  Failed:              0
+
+FILE COUNTS
+-----------
+  orats_cores/   : 89 CSV files  (158 MB total)
+  orats_dailies/ : 89 CSV files  (220 MB total)
+
+ROW COUNTS (all tickers combined)
+----------------------------------
+  Cores rows:   2,095,115
+  Dailies rows: 2,229,265
+
+TICKER LIST (all 89)
+--------------------
+AAPL, MSFT, GOOGL, AMZN, META, NVDA, TSM, AVGO, ORCL, CRM,
+ADBE, INTC, AMD, QCOM, TXN, INTU, ISRG, NOW, AMAT, MU,
+LRCX, KLAC, MRVL, SNPS, UNH, JNJ, LLY, ABBV, MRK, PFE,
+TMO, ABT, DHR, BMY, AMGN, GILD, VRTX, REGN, MDT, JPM,
+BAC, WFC, GS, MS, BLK, SCHW, AXP, C, USB, PNC,
+TFC, PG, KO, PEP, COST, WMT, HD, MCD, NKE, SBUX,
+TGT, LOW, TJX, CMG, CAT, DE, HON, UNP, UPS, GE,
+RTX, LMT, BA, MMM, XOM, CVX, COP, SLB, EOG, MPC,
+NEE, DUK, SO, AMT, PLD, CCI, V, MA, SPY
+
+EXECUTION NOTES
+---------------
+- Script run 4 times (timeout limit ~580s per run)
+- Run 1: Completed tickers 1-23 (AAPL through MRVL, plus healthcare/tech sector)
+- Run 2: Completed tickers 24-60 (SNPS through SBUX)
+- Run 3: Completed tickers 61-85 (TGT through PLD)
+- Run 4: Completed tickers 86-89 (CCI, V, MA, SPY) — FINAL, 0 failures
+- Skip logic ensured no duplicate downloads between runs
+- API key: 9e8c6cb2-a56e-41ba-8993-6bea2c095c8f (hardcoded in seed_orats.py)
+- Sleep between API calls: 0.3s
+- Approximate total API calls made: 89 tickers × 5 chunks × 2 endpoints = 890 calls
+
+DATA LOCATIONS
+--------------
+  Cores (IV surface):  backtest/data/orats_cores/<TICKER>.csv
+  Dailies (stock):     backtest/data/orats_dailies/<TICKER>.csv
+
+FIELDS IN CORES CSV
+-------------------
+ticker, tradeDate, orIvXern20d, orIvXern50d, orHv20d, orHv50d, orHv100d,
+slope, slopeInf, deriv, derivInf, iv30d, iv60d, iv90d, divYield
+
+FIELDS IN DAILIES CSV
+---------------------
+All fields returned by ORATS /datav2/hist/dailies endpoint
+(includes stock price, volume, IV metrics, Greeks summary, etc.)

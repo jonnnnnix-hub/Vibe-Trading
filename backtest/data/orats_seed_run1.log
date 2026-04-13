@@ -1,0 +1,207 @@
+Starting ORATS data seed for 89 tickers...
+Date range: 2025-01-02 to 2026-04-11 (5 quarterly chunks)
+
+[  1/89] AAPL: SKIPPED (already downloaded)
+[  2/89] MSFT: SKIPPED (already downloaded)
+[  3/89] GOOGL: SKIPPED (already downloaded)
+[  4/89] AMZN: SKIPPED (already downloaded)
+[  5/89] META: SKIPPED (already downloaded)
+[  6/89] NVDA: SKIPPED (already downloaded)
+[  7/89] TSM: SKIPPED (already downloaded)
+[  8/89] AVGO: SKIPPED (already downloaded)
+[  9/89] ORCL: downloading...
+    cores 2025-01-02~2025-03-31: 4848 rows
+    dailies 2025-01-02~2025-03-31: 5099 rows
+    cores 2025-04-01~2025-06-30: 4848 rows
+    dailies 2025-04-01~2025-06-30: 5099 rows
+    cores 2025-07-01~2025-09-30: 4848 rows
+    dailies 2025-07-01~2025-09-30: 5099 rows
+    cores 2025-10-01~2025-12-31: 4848 rows
+    dailies 2025-10-01~2025-12-31: 5099 rows
+    cores 2026-01-01~2026-04-11: 4848 rows
+    dailies 2026-01-01~2026-04-11: 5099 rows
+  => cores: 24240 rows, dailies: 25495 rows
+
+[ 10/89] CRM: downloading...
+    cores 2025-01-02~2025-03-31: 4848 rows
+    dailies 2025-01-02~2025-03-31: 5099 rows
+    cores 2025-04-01~2025-06-30: 4848 rows
+    dailies 2025-04-01~2025-06-30: 5099 rows
+    cores 2025-07-01~2025-09-30: 4848 rows
+    dailies 2025-07-01~2025-09-30: 5099 rows
+    cores 2025-10-01~2025-12-31: 4848 rows
+    dailies 2025-10-01~2025-12-31: 5099 rows
+    cores 2026-01-01~2026-04-11: 4848 rows
+    dailies 2026-01-01~2026-04-11: 5099 rows
+  => cores: 24240 rows, dailies: 25495 rows
+
+[ 11/89] ADBE: downloading...
+    cores 2025-01-02~2025-03-31: 4847 rows
+    dailies 2025-01-02~2025-03-31: 5099 rows
+    cores 2025-04-01~2025-06-30: 4847 rows
+    dailies 2025-04-01~2025-06-30: 5099 rows
+    cores 2025-07-01~2025-09-30: 4847 rows
+    dailies 2025-07-01~2025-09-30: 5099 rows
+    cores 2025-10-01~2025-12-31: 4847 rows
+    dailies 2025-10-01~2025-12-31: 5099 rows
+    cores 2026-01-01~2026-04-11: 4847 rows
+    dailies 2026-01-01~2026-04-11: 5099 rows
+  => cores: 24235 rows, dailies: 25495 rows
+
+[ 12/89] INTC: downloading...
+    cores 2025-01-02~2025-03-31: 4847 rows
+    dailies 2025-01-02~2025-03-31: 5099 rows
+    cores 2025-04-01~2025-06-30: 4847 rows
+    dailies 2025-04-01~2025-06-30: 5099 rows
+    cores 2025-07-01~2025-09-30: 4847 rows
+    dailies 2025-07-01~2025-09-30: 5099 rows
+    cores 2025-10-01~2025-12-31: 4847 rows
+    dailies 2025-10-01~2025-12-31: 5099 rows
+    cores 2026-01-01~2026-04-11: 4847 rows
+    dailies 2026-01-01~2026-04-11: 5099 rows
+  => cores: 24235 rows, dailies: 25495 rows
+
+[ 13/89] AMD: downloading...
+    cores 2025-01-02~2025-03-31: 4848 rows
+    dailies 2025-01-02~2025-03-31: 5099 rows
+    cores 2025-04-01~2025-06-30: 4848 rows
+    dailies 2025-04-01~2025-06-30: 5099 rows
+    cores 2025-07-01~2025-09-30: 4848 rows
+    dailies 2025-07-01~2025-09-30: 5099 rows
+    cores 2025-10-01~2025-12-31: 4848 rows
+    dailies 2025-10-01~2025-12-31: 5099 rows
+    cores 2026-01-01~2026-04-11: 4848 rows
+    dailies 2026-01-01~2026-04-11: 5099 rows
+  => cores: 24240 rows, dailies: 25495 rows
+
+[ 14/89] QCOM: downloading...
+    cores 2025-01-02~2025-03-31: 4847 rows
+    dailies 2025-01-02~2025-03-31: 5099 rows
+    cores 2025-04-01~2025-06-30: 4847 rows
+    dailies 2025-04-01~2025-06-30: 5099 rows
+    cores 2025-07-01~2025-09-30: 4847 rows
+    dailies 2025-07-01~2025-09-30: 5099 rows
+    cores 2025-10-01~2025-12-31: 4847 rows
+    dailies 2025-10-01~2025-12-31: 5099 rows
+    cores 2026-01-01~2026-04-11: 4847 rows
+    dailies 2026-01-01~2026-04-11: 5099 rows
+  => cores: 24235 rows, dailies: 25495 rows
+
+[ 15/89] TXN: downloading...
+    cores 2025-01-02~2025-03-31: 4848 rows
+    dailies 2025-01-02~2025-03-31: 5099 rows
+    cores 2025-04-01~2025-06-30: 4848 rows
+    dailies 2025-04-01~2025-06-30: 5099 rows
+    cores 2025-07-01~2025-09-30: 4848 rows
+    dailies 2025-07-01~2025-09-30: 5099 rows
+    cores 2025-10-01~2025-12-31: 4848 rows
+    dailies 2025-10-01~2025-12-31: 5099 rows
+    cores 2026-01-01~2026-04-11: 4848 rows
+    dailies 2026-01-01~2026-04-11: 5099 rows
+  => cores: 24240 rows, dailies: 25495 rows
+
+[ 16/89] INTU: downloading...
+    cores 2025-01-02~2025-03-31: 4848 rows
+    dailies 2025-01-02~2025-03-31: 5099 rows
+    cores 2025-04-01~2025-06-30: 4848 rows
+    dailies 2025-04-01~2025-06-30: 5099 rows
+    cores 2025-07-01~2025-09-30: 4848 rows
+    dailies 2025-07-01~2025-09-30: 5099 rows
+    cores 2025-10-01~2025-12-31: 4848 rows
+    dailies 2025-10-01~2025-12-31: 5099 rows
+    cores 2026-01-01~2026-04-11: 4848 rows
+    dailies 2026-01-01~2026-04-11: 5099 rows
+  => cores: 24240 rows, dailies: 25495 rows
+
+[ 17/89] ISRG: downloading...
+    cores 2025-01-02~2025-03-31: 4848 rows
+    dailies 2025-01-02~2025-03-31: 5099 rows
+    cores 2025-04-01~2025-06-30: 4848 rows
+    dailies 2025-04-01~2025-06-30: 5099 rows
+    cores 2025-07-01~2025-09-30: 4848 rows
+    dailies 2025-07-01~2025-09-30: 5099 rows
+    cores 2025-10-01~2025-12-31: 4848 rows
+    dailies 2025-10-01~2025-12-31: 5099 rows
+    cores 2026-01-01~2026-04-11: 4848 rows
+    dailies 2026-01-01~2026-04-11: 5099 rows
+  => cores: 24240 rows, dailies: 25495 rows
+
+[ 18/89] NOW: downloading...
+    cores 2025-01-02~2025-03-31: 3435 rows
+    dailies 2025-01-02~2025-03-31: 3464 rows
+    cores 2025-04-01~2025-06-30: 3435 rows
+    dailies 2025-04-01~2025-06-30: 3464 rows
+    cores 2025-07-01~2025-09-30: 3435 rows
+    dailies 2025-07-01~2025-09-30: 3464 rows
+    cores 2025-10-01~2025-12-31: 3435 rows
+    dailies 2025-10-01~2025-12-31: 3464 rows
+    cores 2026-01-01~2026-04-11: 3435 rows
+    dailies 2026-01-01~2026-04-11: 3464 rows
+  => cores: 17175 rows, dailies: 17320 rows
+
+[ 19/89] AMAT: downloading...
+    cores 2025-01-02~2025-03-31: 4848 rows
+    dailies 2025-01-02~2025-03-31: 5099 rows
+    cores 2025-04-01~2025-06-30: 4848 rows
+    dailies 2025-04-01~2025-06-30: 5099 rows
+    cores 2025-07-01~2025-09-30: 4848 rows
+    dailies 2025-07-01~2025-09-30: 5099 rows
+    cores 2025-10-01~2025-12-31: 4848 rows
+    dailies 2025-10-01~2025-12-31: 5099 rows
+    cores 2026-01-01~2026-04-11: 4848 rows
+    dailies 2026-01-01~2026-04-11: 5099 rows
+  => cores: 24240 rows, dailies: 25495 rows
+
+[ 20/89] MU: downloading...
+    cores 2025-01-02~2025-03-31: 4848 rows
+    dailies 2025-01-02~2025-03-31: 5099 rows
+    cores 2025-04-01~2025-06-30: 4848 rows
+    dailies 2025-04-01~2025-06-30: 5099 rows
+    cores 2025-07-01~2025-09-30: 4848 rows
+    dailies 2025-07-01~2025-09-30: 5099 rows
+    cores 2025-10-01~2025-12-31: 4848 rows
+    dailies 2025-10-01~2025-12-31: 5099 rows
+    cores 2026-01-01~2026-04-11: 4848 rows
+    dailies 2026-01-01~2026-04-11: 5099 rows
+  => cores: 24240 rows, dailies: 25495 rows
+
+[ 21/89] LRCX: downloading...
+    cores 2025-01-02~2025-03-31: 4846 rows
+    dailies 2025-01-02~2025-03-31: 5099 rows
+    cores 2025-04-01~2025-06-30: 4846 rows
+    dailies 2025-04-01~2025-06-30: 5099 rows
+    cores 2025-07-01~2025-09-30: 4846 rows
+    dailies 2025-07-01~2025-09-30: 5099 rows
+    cores 2025-10-01~2025-12-31: 4846 rows
+    dailies 2025-10-01~2025-12-31: 5099 rows
+    cores 2026-01-01~2026-04-11: 4846 rows
+    dailies 2026-01-01~2026-04-11: 5099 rows
+  => cores: 24230 rows, dailies: 25495 rows
+
+[ 22/89] KLAC: downloading...
+    cores 2025-01-02~2025-03-31: 4848 rows
+    dailies 2025-01-02~2025-03-31: 5099 rows
+    cores 2025-04-01~2025-06-30: 4848 rows
+    dailies 2025-04-01~2025-06-30: 5099 rows
+    cores 2025-07-01~2025-09-30: 4848 rows
+    dailies 2025-07-01~2025-09-30: 5099 rows
+    cores 2025-10-01~2025-12-31: 4848 rows
+    dailies 2025-10-01~2025-12-31: 5099 rows
+    cores 2026-01-01~2026-04-11: 4848 rows
+    dailies 2026-01-01~2026-04-11: 5099 rows
+  => cores: 24240 rows, dailies: 25495 rows
+
+[ 23/89] MRVL: downloading...
+    cores 2025-01-02~2025-03-31: 4848 rows
+    dailies 2025-01-02~2025-03-31: 5099 rows
+    cores 2025-04-01~2025-06-30: 4848 rows
+    dailies 2025-04-01~2025-06-30: 5099 rows
+    cores 2025-07-01~2025-09-30: 4848 rows
+    dailies 2025-07-01~2025-09-30: 5099 rows
+    cores 2025-10-01~2025-12-31: 4848 rows
+    dailies 2025-10-01~2025-12-31: 5099 rows
+    cores 2026-01-01~2026-04-11: 4848 rows
+    dailies 2026-01-01~2026-04-11: 5099 rows
+  => cores: 24240 rows, dailies: 25495 rows
+
+[ 24/89] SNPS: downloading...

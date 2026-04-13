@@ -1,0 +1,150 @@
+Starting ORATS data seed for 89 tickers...
+Date range: 2025-01-02 to 2026-04-11 (5 quarterly chunks)
+
+[  1/89] AAPL: SKIPPED (already downloaded)
+[  2/89] MSFT: SKIPPED (already downloaded)
+[  3/89] GOOGL: SKIPPED (already downloaded)
+[  4/89] AMZN: SKIPPED (already downloaded)
+[  5/89] META: SKIPPED (already downloaded)
+[  6/89] NVDA: SKIPPED (already downloaded)
+[  7/89] TSM: SKIPPED (already downloaded)
+[  8/89] AVGO: SKIPPED (already downloaded)
+[  9/89] ORCL: SKIPPED (already downloaded)
+[ 10/89] CRM: SKIPPED (already downloaded)
+[ 11/89] ADBE: SKIPPED (already downloaded)
+[ 12/89] INTC: SKIPPED (already downloaded)
+[ 13/89] AMD: SKIPPED (already downloaded)
+[ 14/89] QCOM: SKIPPED (already downloaded)
+[ 15/89] TXN: SKIPPED (already downloaded)
+[ 16/89] INTU: SKIPPED (already downloaded)
+[ 17/89] ISRG: SKIPPED (already downloaded)
+[ 18/89] NOW: SKIPPED (already downloaded)
+[ 19/89] AMAT: SKIPPED (already downloaded)
+[ 20/89] MU: SKIPPED (already downloaded)
+[ 21/89] LRCX: SKIPPED (already downloaded)
+[ 22/89] KLAC: SKIPPED (already downloaded)
+[ 23/89] MRVL: SKIPPED (already downloaded)
+[ 24/89] SNPS: SKIPPED (already downloaded)
+[ 25/89] UNH: SKIPPED (already downloaded)
+[ 26/89] JNJ: SKIPPED (already downloaded)
+[ 27/89] LLY: SKIPPED (already downloaded)
+[ 28/89] ABBV: SKIPPED (already downloaded)
+[ 29/89] MRK: SKIPPED (already downloaded)
+[ 30/89] PFE: SKIPPED (already downloaded)
+[ 31/89] TMO: SKIPPED (already downloaded)
+[ 32/89] ABT: SKIPPED (already downloaded)
+[ 33/89] DHR: SKIPPED (already downloaded)
+[ 34/89] BMY: SKIPPED (already downloaded)
+[ 35/89] AMGN: SKIPPED (already downloaded)
+[ 36/89] GILD: SKIPPED (already downloaded)
+[ 37/89] VRTX: SKIPPED (already downloaded)
+[ 38/89] REGN: SKIPPED (already downloaded)
+[ 39/89] MDT: SKIPPED (already downloaded)
+[ 40/89] JPM: SKIPPED (already downloaded)
+[ 41/89] BAC: SKIPPED (already downloaded)
+[ 42/89] WFC: SKIPPED (already downloaded)
+[ 43/89] GS: SKIPPED (already downloaded)
+[ 44/89] MS: SKIPPED (already downloaded)
+[ 45/89] BLK: SKIPPED (already downloaded)
+[ 46/89] SCHW: SKIPPED (already downloaded)
+[ 47/89] AXP: SKIPPED (already downloaded)
+[ 48/89] C: SKIPPED (already downloaded)
+[ 49/89] USB: SKIPPED (already downloaded)
+[ 50/89] PNC: SKIPPED (already downloaded)
+[ 51/89] TFC: SKIPPED (already downloaded)
+[ 52/89] PG: SKIPPED (already downloaded)
+[ 53/89] KO: SKIPPED (already downloaded)
+[ 54/89] PEP: SKIPPED (already downloaded)
+[ 55/89] COST: SKIPPED (already downloaded)
+[ 56/89] WMT: SKIPPED (already downloaded)
+[ 57/89] HD: SKIPPED (already downloaded)
+[ 58/89] MCD: SKIPPED (already downloaded)
+[ 59/89] NKE: SKIPPED (already downloaded)
+[ 60/89] SBUX: SKIPPED (already downloaded)
+[ 61/89] TGT: SKIPPED (already downloaded)
+[ 62/89] LOW: SKIPPED (already downloaded)
+[ 63/89] TJX: SKIPPED (already downloaded)
+[ 64/89] CMG: SKIPPED (already downloaded)
+[ 65/89] CAT: SKIPPED (already downloaded)
+[ 66/89] DE: SKIPPED (already downloaded)
+[ 67/89] HON: SKIPPED (already downloaded)
+[ 68/89] UNP: SKIPPED (already downloaded)
+[ 69/89] UPS: SKIPPED (already downloaded)
+[ 70/89] GE: SKIPPED (already downloaded)
+[ 71/89] RTX: SKIPPED (already downloaded)
+[ 72/89] LMT: SKIPPED (already downloaded)
+[ 73/89] BA: SKIPPED (already downloaded)
+[ 74/89] MMM: SKIPPED (already downloaded)
+[ 75/89] XOM: SKIPPED (already downloaded)
+[ 76/89] CVX: SKIPPED (already downloaded)
+[ 77/89] COP: SKIPPED (already downloaded)
+[ 78/89] SLB: SKIPPED (already downloaded)
+[ 79/89] EOG: SKIPPED (already downloaded)
+[ 80/89] MPC: SKIPPED (already downloaded)
+[ 81/89] NEE: SKIPPED (already downloaded)
+[ 82/89] DUK: SKIPPED (already downloaded)
+[ 83/89] SO: SKIPPED (already downloaded)
+[ 84/89] AMT: SKIPPED (already downloaded)
+[ 85/89] PLD: SKIPPED (already downloaded)
+[ 86/89] CCI: downloading...
+    cores 2025-01-02~2025-03-31: 4848 rows
+    dailies 2025-01-02~2025-03-31: 5099 rows
+    cores 2025-04-01~2025-06-30: 4848 rows
+    dailies 2025-04-01~2025-06-30: 5099 rows
+    cores 2025-07-01~2025-09-30: 4848 rows
+    dailies 2025-07-01~2025-09-30: 5099 rows
+    cores 2025-10-01~2025-12-31: 4848 rows
+    dailies 2025-10-01~2025-12-31: 5099 rows
+    cores 2026-01-01~2026-04-11: 4848 rows
+    dailies 2026-01-01~2026-04-11: 5099 rows
+  => cores: 24240 rows, dailies: 25495 rows
+
+[ 87/89] V: downloading...
+    cores 2025-01-02~2025-03-31: 4533 rows
+    dailies 2025-01-02~2025-03-31: 4544 rows
+    cores 2025-04-01~2025-06-30: 4533 rows
+    dailies 2025-04-01~2025-06-30: 4544 rows
+    cores 2025-07-01~2025-09-30: 4533 rows
+    dailies 2025-07-01~2025-09-30: 4544 rows
+    cores 2025-10-01~2025-12-31: 4533 rows
+    dailies 2025-10-01~2025-12-31: 4544 rows
+    cores 2026-01-01~2026-04-11: 4533 rows
+    dailies 2026-01-01~2026-04-11: 4544 rows
+  => cores: 22665 rows, dailies: 22720 rows
+
+[ 88/89] MA: downloading...
+    cores 2025-01-02~2025-03-31: 4848 rows
+    dailies 2025-01-02~2025-03-31: 5000 rows
+    cores 2025-04-01~2025-06-30: 4848 rows
+    dailies 2025-04-01~2025-06-30: 5000 rows
+    cores 2025-07-01~2025-09-30: 4848 rows
+    dailies 2025-07-01~2025-09-30: 5000 rows
+    cores 2025-10-01~2025-12-31: 4848 rows
+    dailies 2025-10-01~2025-12-31: 5000 rows
+    cores 2026-01-01~2026-04-11: 4848 rows
+    dailies 2026-01-01~2026-04-11: 5000 rows
+  => cores: 24240 rows, dailies: 25000 rows
+
+[ 89/89] SPY: downloading...
+    cores 2025-01-02~2025-03-31: 4848 rows
+    dailies 2025-01-02~2025-03-31: 5099 rows
+    cores 2025-04-01~2025-06-30: 4848 rows
+    dailies 2025-04-01~2025-06-30: 5099 rows
+    cores 2025-07-01~2025-09-30: 4848 rows
+    dailies 2025-07-01~2025-09-30: 5099 rows
+    cores 2025-10-01~2025-12-31: 4848 rows
+    dailies 2025-10-01~2025-12-31: 5099 rows
+    cores 2026-01-01~2026-04-11: 4848 rows
+    dailies 2026-01-01~2026-04-11: 5099 rows
+  => cores: 24240 rows, dailies: 25495 rows
+
+============================================================
+SUMMARY
+============================================================
+  Tickers:    89 total
+  Succeeded:  4
+  Skipped:    85
+  Failed:     0
+  Cores rows:   95,385
+  Dailies rows: 98,710
+============================================================
