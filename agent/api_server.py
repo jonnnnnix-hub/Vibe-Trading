@@ -1237,9 +1237,27 @@ def serve_main(argv: list[str] | None = None) -> int:
         print("[dev] Frontend: http://localhost:5173")
         print(f"[dev] API: http://localhost:{args.port}")
     elif frontend_dist.exists():
-        if not any(route.path == "/" for route in app.routes):
-            app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
-        print(f"[prod] Frontend served from {frontend_dist}")
+        from starlette.responses import FileResponse
+
+        # Serve static assets (JS, CSS, images, etc.)
+        app.mount("/assets", StaticFiles(directory=str(frontend_dist / "assets")), name="static-assets")
+
+        # Serve other static files at root level (favicon, manifest, etc.)
+        @app.get("/vite.svg")
+        async def vite_svg():
+            return FileResponse(frontend_dist / "vite.svg")
+
+        # SPA catch-all: serve index.html for any non-API route
+        @app.get("/{full_path:path}")
+        async def spa_fallback(full_path: str):
+            # If a real file exists in dist, serve it
+            file_path = frontend_dist / full_path
+            if full_path and file_path.exists() and file_path.is_file():
+                return FileResponse(file_path)
+            # Otherwise, serve index.html for client-side routing
+            return FileResponse(frontend_dist / "index.html")
+
+        print(f"[prod] Frontend served from {frontend_dist} (SPA mode)")
     else:
         print(f"[warn] No frontend build found at {frontend_dist}")
         print("[warn] Run: cd frontend && npm run build")
