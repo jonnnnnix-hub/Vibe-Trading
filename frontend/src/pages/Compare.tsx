@@ -28,7 +28,7 @@ function diffClass(a: unknown, b: unknown, higherIsBetter: boolean): string {
   if (!Number.isFinite(na) || !Number.isFinite(nb)) return "";
   const better = higherIsBetter ? nb > na : nb < na;
   const worse = higherIsBetter ? nb < na : nb > na;
-  return better ? "text-green-600 dark:text-green-400" : worse ? "text-red-600 dark:text-red-400" : "";
+  return better ? "text-[#34D399]" : worse ? "text-[#F87171]" : "";
 }
 
 function diffStr(a: unknown, b: unknown, type: "pct" | "num" | "int" | "days"): string {
@@ -243,23 +243,39 @@ export function Compare() {
 
   return (
     <div className="p-8 max-w-4xl space-y-6">
-      <h1 className="text-xl font-bold flex items-center gap-2">
-        <GitCompare className="h-5 w-5" /> {t.strategyComparison}
+      {/* Header with gradient text */}
+      <h1 className="text-xl font-bold flex items-center gap-2.5">
+        <GitCompare className="h-5 w-5 text-[#F0A050] drop-shadow-[0_0_8px_rgba(240,160,80,0.5)]" />
+        <span className="bg-gradient-to-r from-[#E8E9F0] to-[#8B8FA3] bg-clip-text text-transparent">
+          {t.strategyComparison}
+        </span>
       </h1>
 
       {/* Selectors */}
       <div className="flex gap-4 items-end">
         <div className="flex-1">
-          <label className="text-xs text-muted-foreground block mb-1">{t.baseline}</label>
-          <select value={leftId} onChange={(e) => setLeftId(e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" title={leftRun?.prompt || leftId}>
+          <label className="text-xs text-[#8B8FA3] block mb-1.5 font-medium uppercase tracking-wide">{t.baseline}</label>
+          <select
+            value={leftId}
+            onChange={(e) => setLeftId(e.target.value)}
+            className="w-full px-3.5 py-2.5 rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/60 backdrop-blur-sm text-sm text-[#E8E9F0] focus:outline-none focus:border-[#F0A050]/40 focus:ring-2 focus:ring-[#F0A050]/15 transition-all duration-200 appearance-none"
+            title={leftRun?.prompt || leftId}
+          >
             <option value="">{t.selectRun}</option>
             {runs.map((r) => <option key={r.run_id} value={r.run_id}>{runLabel(r)} ({r.status})</option>)}
           </select>
         </div>
-        <ArrowRight className="h-5 w-5 text-muted-foreground mb-2 shrink-0" />
+        <div className="mb-3 shrink-0">
+          <ArrowRight className="h-5 w-5 text-[#4A4E68]" />
+        </div>
         <div className="flex-1">
-          <label className="text-xs text-muted-foreground block mb-1">{t.compareTo}</label>
-          <select value={rightId} onChange={(e) => setRightId(e.target.value)} className="w-full px-3 py-2 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" title={rightRun?.prompt || rightId}>
+          <label className="text-xs text-[#8B8FA3] block mb-1.5 font-medium uppercase tracking-wide">{t.compareTo}</label>
+          <select
+            value={rightId}
+            onChange={(e) => setRightId(e.target.value)}
+            className="w-full px-3.5 py-2.5 rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/60 backdrop-blur-sm text-sm text-[#E8E9F0] focus:outline-none focus:border-[#F0A050]/40 focus:ring-2 focus:ring-[#F0A050]/15 transition-all duration-200 appearance-none"
+            title={rightRun?.prompt || rightId}
+          >
             <option value="">{t.selectRun}</option>
             {runs.map((r) => <option key={r.run_id} value={r.run_id}>{runLabel(r)} ({r.status})</option>)}
           </select>
@@ -268,8 +284,8 @@ export function Compare() {
 
       {/* Equity curve overlay */}
       {(leftCurve.length > 0 || rightCurve.length > 0) && (
-        <div className="border rounded-xl p-4">
-          <h2 className="text-sm font-medium text-muted-foreground mb-2">{t.equityDrawdown}</h2>
+        <div className="rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/60 backdrop-blur-2xl p-4 shadow-[0_0_40px_rgba(5,6,10,0.5)]">
+          <h2 className="text-xs font-medium text-[#8B8FA3] mb-3 uppercase tracking-wide">{t.equityDrawdown}</h2>
           <EquityChartOverlay
             leftCurve={leftCurve}
             rightCurve={rightCurve}
@@ -281,26 +297,47 @@ export function Compare() {
 
       {/* Metrics table */}
       {(leftData || rightData) && (
-        <div className="border rounded-xl overflow-hidden">
+        <div className="rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/40 backdrop-blur-2xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-muted/40">
-                <th className="text-left px-4 py-2.5 text-muted-foreground font-medium">{t.metric}</th>
-                <th className="text-right px-4 py-2.5 text-muted-foreground font-medium">{t.baseline}</th>
-                <th className="text-right px-4 py-2.5 text-muted-foreground font-medium">{t.compareTo}</th>
-                <th className="text-right px-4 py-2.5 text-muted-foreground font-medium">{t.delta}</th>
+              <tr className="border-b border-[#1E2035]/50 bg-[#0F1117]">
+                <th className="text-left px-4 py-3 text-xs text-[#4A4E68] font-medium uppercase tracking-wide">{t.metric}</th>
+                <th className="text-right px-4 py-3 text-xs text-[#4A4E68] font-medium uppercase tracking-wide">{t.baseline}</th>
+                <th className="text-right px-4 py-3 text-xs text-[#4A4E68] font-medium uppercase tracking-wide">{t.compareTo}</th>
+                <th className="text-right px-4 py-3 text-xs text-[#4A4E68] font-medium uppercase tracking-wide">{t.delta}</th>
               </tr>
             </thead>
             <tbody>
-              {METRICS.map(({ key, label, type, higherIsBetter }) => {
+              {METRICS.map(({ key, label, type, higherIsBetter }, rowIdx) => {
                 const lv = resolveMetric(leftData, key);
                 const rv = resolveMetric(rightData, key);
+                const dc = diffClass(lv, rv, higherIsBetter);
+                const isPositiveDelta = dc === "text-[#34D399]";
+                const isNegativeDelta = dc === "text-[#F87171]";
                 return (
-                  <tr key={key} className="border-b last:border-0 hover:bg-muted/20">
-                    <td className="px-4 py-2.5 font-medium">{label}</td>
-                    <td className="px-4 py-2.5 text-right font-mono tabular-nums">{fmt(lv, type)}</td>
-                    <td className="px-4 py-2.5 text-right font-mono tabular-nums">{fmt(rv, type)}</td>
-                    <td className={cn("px-4 py-2.5 text-right font-mono tabular-nums font-semibold", diffClass(lv, rv, higherIsBetter))}>{diffStr(lv, rv, type)}</td>
+                  <tr
+                    key={key}
+                    className={cn(
+                      "border-b border-[#1E2035]/30 last:border-0 transition-colors duration-150",
+                      rowIdx % 2 === 0 ? "bg-transparent" : "bg-[#0F1117]/30",
+                      "hover:bg-[#161822]/50"
+                    )}
+                  >
+                    <td className="px-4 py-2.5 font-medium text-[#E8E9F0]">{label}</td>
+                    <td className="px-4 py-2.5 text-right font-mono tabular-nums text-[#8B8FA3]">{fmt(lv, type)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono tabular-nums text-[#8B8FA3]">{fmt(rv, type)}</td>
+                    <td className={cn(
+                      "px-4 py-2.5 text-right font-mono tabular-nums font-semibold",
+                      dc || "text-[#8B8FA3]"
+                    )}>
+                      <span className={cn(
+                        "inline-flex items-center gap-0.5",
+                        isPositiveDelta && "drop-shadow-[0_0_4px_rgba(52,211,153,0.4)]",
+                        isNegativeDelta && "drop-shadow-[0_0_4px_rgba(248,113,113,0.4)]"
+                      )}>
+                        {diffStr(lv, rv, type)}
+                      </span>
+                    </td>
                   </tr>
                 );
               })}
@@ -309,10 +346,15 @@ export function Compare() {
         </div>
       )}
 
+      {/* Empty state */}
       {!leftData && !rightData && (
-        <div className="text-center py-16 text-muted-foreground">
-          <GitCompare className="h-12 w-12 mx-auto mb-3 opacity-20" />
-          <p className="text-sm">{t.selectTwoRuns}</p>
+        <div className="text-center py-20">
+          <div className="relative inline-block mb-4">
+            <GitCompare className="h-14 w-14 text-[#1E2035] mx-auto" />
+            {/* Ambient glow */}
+            <div className="absolute inset-0 blur-2xl bg-[#F0A050]/5 rounded-full scale-150" />
+          </div>
+          <p className="text-sm text-[#4A4E68]">{t.selectTwoRuns}</p>
         </div>
       )}
     </div>

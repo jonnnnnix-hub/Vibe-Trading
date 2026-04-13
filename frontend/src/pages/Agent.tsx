@@ -624,16 +624,23 @@ export function Agent() {
 
   return (
     <div className="flex flex-col flex-1 min-w-0 overflow-hidden h-full">
-      <div ref={listRef} className="flex-1 overflow-auto p-6 scroll-smooth relative">
-        <div className="max-w-3xl mx-auto space-y-4">
+      {/* Chat area with top fade gradient */}
+      <div
+        ref={listRef}
+        className="flex-1 overflow-auto p-6 scroll-smooth relative"
+        style={{
+          background: "linear-gradient(to bottom, rgba(5,6,10,0.95) 0%, transparent 60px)"
+        }}
+      >
+        <div className="max-w-3xl mx-auto space-y-5">
           {sessionLoading && (
-            <div className="space-y-4 py-4">
+            <div className="space-y-5 py-4">
               {[1, 2, 3].map(i => (
                 <div key={i} className="flex gap-3 animate-pulse">
-                  <div className="h-8 w-8 rounded-full bg-muted shrink-0" />
+                  <div className="h-8 w-8 rounded-full bg-[#161822] shrink-0" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-muted rounded w-3/4" />
-                    <div className="h-3 bg-muted/60 rounded w-1/2" />
+                    <div className="h-4 bg-[#161822] rounded-xl w-3/4" />
+                    <div className="h-3 bg-[#161822]/60 rounded-xl w-1/2" />
                   </div>
                 </div>
               ))}
@@ -674,22 +681,29 @@ export function Agent() {
           {(streamingText || (status === "streaming" && toolCalls.length > 0)) && (
             <div className="flex gap-3">
               <AgentAvatar />
-              <div className="flex-1 min-w-0 space-y-1.5">
+              <div className="flex-1 min-w-0 space-y-2">
                 {streamingText && (
-                  <div className="prose prose-sm dark:prose-invert max-w-none leading-relaxed">
-                    {streamingText}
-                    <span className="inline-block w-0.5 h-4 bg-primary ml-0.5 animate-pulse align-middle" />
+                  <div className="rounded-2xl rounded-tl-sm bg-[#0F1117] border border-[#1E2035]/50 px-4 py-3">
+                    <div className="prose prose-sm dark:prose-invert max-w-none leading-relaxed text-[#E8E9F0]">
+                      {streamingText}
+                      <span className="inline-block w-0.5 h-4 bg-[#F0A050] ml-0.5 animate-pulse align-middle drop-shadow-[0_0_6px_rgba(240,160,80,0.8)]" />
+                    </div>
                   </div>
                 )}
                 {status === "streaming" && toolCalls.length > 0 && (() => {
                   const latest = toolCalls[toolCalls.length - 1];
                   const running = latest.status === "running";
                   return (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      {running
-                        ? <Loader2 className="h-3 w-3 animate-spin text-primary shrink-0" />
-                        : <CheckCircle2 className="h-3 w-3 text-success/60 shrink-0" />}
-                      <span>Step {toolCalls.length} · {latest.tool}</span>
+                    <div className="flex items-center gap-2 text-xs text-[#8B8FA3] px-1">
+                      {running ? (
+                        <span className="relative flex h-3 w-3 shrink-0">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F0A050]/50 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-[#F0A050]" />
+                        </span>
+                      ) : (
+                        <CheckCircle2 className="h-3 w-3 text-[#34D399]/60 shrink-0" />
+                      )}
+                      <span className={running ? "text-[#E8E9F0]" : ""}>Step {toolCalls.length} · {latest.tool}</span>
                     </div>
                   );
                 })()}
@@ -703,7 +717,7 @@ export function Agent() {
         {showScrollBtn && (
           <button
             onClick={forceScrollToBottom}
-            className="sticky bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-medium shadow-lg hover:opacity-90 transition-opacity z-10"
+            className="sticky bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F0A050] text-[#05060A] text-xs font-semibold shadow-[0_0_20px_rgba(240,160,80,0.4)] hover:shadow-[0_0_30px_rgba(240,160,80,0.6)] transition-all duration-200 z-10"
           >
             <ArrowDown className="h-3 w-3" /> New messages
           </button>
@@ -711,15 +725,19 @@ export function Agent() {
         <ConversationTimeline messages={messages} containerRef={listRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t p-4 bg-background/80 backdrop-blur-sm">
+      {/* Input area */}
+      <form
+        onSubmit={handleSubmit}
+        className="border-t border-[#1E2035]/50 p-4 bg-[#05060A]/80 backdrop-blur-xl"
+      >
         <div className="max-w-3xl mx-auto space-y-2">
           {/* Swarm preset badge */}
           {swarmPreset && (
             <div className="flex items-center gap-1">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 text-xs font-medium">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-medium backdrop-blur-sm">
                 <Users className="h-3 w-3" />
                 {swarmPreset.title}
-                <button type="button" onClick={() => setSwarmPreset(null)} className="hover:text-destructive transition-colors">
+                <button type="button" onClick={() => setSwarmPreset(null)} className="hover:text-[#F87171] transition-colors ml-0.5">
                   <X className="h-3 w-3" />
                 </button>
               </span>
@@ -728,10 +746,10 @@ export function Agent() {
           {/* Attachment badge */}
           {attachment && (
             <div className="flex items-center gap-1">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 text-primary text-xs font-medium">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#F0A050]/10 border border-[#F0A050]/20 text-[#F0A050] text-xs font-medium backdrop-blur-sm">
                 <Paperclip className="h-3 w-3" />
                 {attachment.filename}
-                <button type="button" onClick={() => setAttachment(null)} className="hover:text-destructive transition-colors">
+                <button type="button" onClick={() => setAttachment(null)} className="hover:text-[#F87171] transition-colors ml-0.5">
                   <X className="h-3 w-3" />
                 </button>
               </span>
@@ -739,8 +757,8 @@ export function Agent() {
           )}
           {/* Uploading indicator */}
           {uploading && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin" />
+            <div className="flex items-center gap-1.5 text-xs text-[#8B8FA3]">
+              <Loader2 className="h-3 w-3 animate-spin text-[#F0A050]" />
               Uploading...
             </div>
           )}
@@ -751,22 +769,22 @@ export function Agent() {
                 type="button"
                 onClick={() => setShowUploadMenu(prev => !prev)}
                 disabled={status === "streaming" || uploading}
-                className="w-9 h-9 rounded-full border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40 shrink-0"
+                className="w-9 h-9 rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/60 flex items-center justify-center text-[#4A4E68] hover:text-[#F0A050] hover:border-[#F0A050]/30 hover:bg-[#F0A050]/5 transition-all duration-200 disabled:opacity-40 shrink-0 backdrop-blur-sm"
                 title="More options"
               >
                 <Plus className="h-4 w-4" />
               </button>
               {showUploadMenu && (
-                <div className="absolute bottom-full left-0 mb-2 w-52 rounded-xl border bg-background/95 backdrop-blur-sm shadow-lg py-1 z-50">
+                <div className="absolute bottom-full left-0 mb-2 w-52 rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/90 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] py-1.5 z-50">
                   <button
                     type="button"
                     onClick={() => { fileInputRef.current?.click(); setShowUploadMenu(false); }}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
+                    className="w-full px-3.5 py-2.5 text-left text-sm hover:bg-[#0F1117] transition-colors flex items-center gap-2.5 text-[#8B8FA3] hover:text-[#E8E9F0] group"
                   >
-                    <Paperclip className="h-4 w-4" />
+                    <Paperclip className="h-4 w-4 text-[#F0A050] group-hover:drop-shadow-[0_0_4px_rgba(240,160,80,0.6)]" />
                     Upload PDF document
                   </button>
-                  <div className="border-t my-1" />
+                  <div className="border-t border-[#1E2035]/40 my-1" />
                   <button
                     type="button"
                     onClick={() => {
@@ -774,9 +792,9 @@ export function Agent() {
                       setSwarmPreset({ name: "auto", title: "Agent Swarm" });
                       inputRef.current?.focus();
                     }}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
+                    className="w-full px-3.5 py-2.5 text-left text-sm hover:bg-[#0F1117] transition-colors flex items-center gap-2.5 text-[#8B8FA3] hover:text-[#E8E9F0] group"
                   >
-                    <Users className="h-4 w-4" />
+                    <Users className="h-4 w-4 text-violet-400 group-hover:drop-shadow-[0_0_4px_rgba(167,139,250,0.6)]" />
                     Agent Swarm
                   </button>
                 </div>
@@ -806,14 +824,14 @@ export function Agent() {
                 }
               }}
               placeholder={t.prompt}
-              className="flex-1 px-4 py-2.5 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow resize-none max-h-32 overflow-y-auto"
+              className="flex-1 px-4 py-2.5 rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/60 backdrop-blur-sm text-sm text-[#E8E9F0] placeholder:text-[#4A4E68] focus:outline-none focus:border-[#F0A050]/40 focus:ring-2 focus:ring-[#F0A050]/15 focus:shadow-[0_0_0_2px_rgba(240,160,80,0.1)] transition-all duration-200 resize-none max-h-32 overflow-y-auto"
               disabled={status === "streaming"}
             />
             {messages.length > 0 && (
               <button
                 type="button"
                 onClick={handleExport}
-                className="px-3 py-2.5 rounded-xl border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="w-9 h-9 rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/60 flex items-center justify-center text-[#4A4E68] hover:text-[#8B8FA3] hover:bg-[#0F1117] transition-all duration-200 backdrop-blur-sm"
                 title="Export chat"
               >
                 <Download className="h-4 w-4" />
@@ -823,7 +841,7 @@ export function Agent() {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-4 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+                className="w-9 h-9 rounded-2xl bg-[#F87171]/10 border border-[#F87171]/20 text-[#F87171] flex items-center justify-center hover:bg-[#F87171]/20 transition-all duration-200"
                 title="Stop generation"
               >
                 <Square className="h-4 w-4" />
@@ -832,7 +850,7 @@ export function Agent() {
               <button
                 type="submit"
                 disabled={!input.trim() && !attachment}
-                className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity"
+                className="w-9 h-9 rounded-2xl bg-[#F0A050] text-[#05060A] flex items-center justify-center font-medium disabled:opacity-30 hover:bg-[#F0A050]/90 hover:shadow-[0_0_16px_rgba(240,160,80,0.4)] transition-all duration-200 shrink-0"
               >
                 <Send className="h-4 w-4" />
               </button>

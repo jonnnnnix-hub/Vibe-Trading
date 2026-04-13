@@ -1,4 +1,4 @@
-﻿import { Bot, TrendingUp, Bitcoin, Globe, Sparkles, Users } from "lucide-react";
+import { Bot, TrendingUp, Bitcoin, Globe, Sparkles, Users } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 
 interface Example {
@@ -11,6 +11,7 @@ interface Category {
   label: string;
   icon: React.ReactNode;
   color: string;
+  accentColor: string;
   examples: Example[];
 }
 
@@ -18,7 +19,8 @@ const CATEGORIES: Category[] = [
   {
     label: "Multi-Market Backtest",
     icon: <TrendingUp className="h-4 w-4" />,
-    color: "text-red-400 border-red-500/30 hover:border-red-500/60 hover:bg-red-500/5",
+    color: "text-red-400",
+    accentColor: "#F87171",
     examples: [
       {
         title: "Cross-Market Portfolio",
@@ -40,7 +42,8 @@ const CATEGORIES: Category[] = [
   {
     label: "Research & Analysis",
     icon: <Sparkles className="h-4 w-4" />,
-    color: "text-amber-400 border-amber-500/30 hover:border-amber-500/60 hover:bg-amber-500/5",
+    color: "text-amber-400",
+    accentColor: "#F0A050",
     examples: [
       {
         title: "Multi-Factor Alpha Model",
@@ -57,7 +60,8 @@ const CATEGORIES: Category[] = [
   {
     label: "Swarm Teams",
     icon: <Users className="h-4 w-4" />,
-    color: "text-violet-400 border-violet-500/30 hover:border-violet-500/60 hover:bg-violet-500/5",
+    color: "text-violet-400",
+    accentColor: "#A78BFA",
     examples: [
       {
         title: "Investment Committee Review",
@@ -74,7 +78,8 @@ const CATEGORIES: Category[] = [
   {
     label: "Document & Web Research",
     icon: <Globe className="h-4 w-4" />,
-    color: "text-blue-400 border-blue-500/30 hover:border-blue-500/60 hover:bg-blue-500/5",
+    color: "text-blue-400",
+    accentColor: "#60A5FA",
     examples: [
       {
         title: "Analyze an Earnings Report PDF",
@@ -111,56 +116,152 @@ export function WelcomeScreen({ onExample }: Props) {
   const { t } = useI18n();
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 text-center">
-      {/* Header */}
-      <div className="space-y-3">
-        <div className="h-16 w-16 mx-auto rounded-2xl bg-gradient-to-br from-primary/80 to-info/80 flex items-center justify-center shadow-lg">
-          <Bot className="h-8 w-8 text-white" />
+    <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 text-center px-4 py-8">
+      {/* ── Header ── */}
+      <div className="space-y-4">
+        {/* Bot icon with amber glow */}
+        <div className="relative mx-auto w-fit">
+          {/* Glow ring behind icon */}
+          <div
+            className="absolute inset-0 rounded-2xl animate-pulse-glow"
+            style={{
+              background: "radial-gradient(circle, rgba(240,160,80,0.4) 0%, transparent 70%)",
+              filter: "blur(16px)",
+              transform: "scale(1.4)",
+            }}
+          />
+          <div
+            className="relative h-16 w-16 rounded-2xl flex items-center justify-center"
+            style={{
+              background: "linear-gradient(135deg, rgba(240,160,80,0.9) 0%, rgba(96,165,250,0.7) 100%)",
+              boxShadow: "0 0 32px rgba(240,160,80,0.35), 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
+            }}
+          >
+            <Bot className="h-8 w-8 text-white drop-shadow-md" />
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Vibe-Trading</h2>
-          <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto leading-relaxed">
+
+        {/* Title */}
+        <div className="space-y-2">
+          <h2
+            className="text-2xl font-bold tracking-tight"
+            style={{
+              background: "linear-gradient(135deg, #F0A050 0%, #FBBF24 50%, #F0A050 100%)",
+              backgroundSize: "200% auto",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              animation: "shimmer 4s linear infinite",
+            }}
+          >
+            Vibe-Trading
+          </h2>
+          <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">
             vibe trading with your professional financial agent team
           </p>
-          <p className="text-sm text-muted-foreground mt-2 max-w-md leading-relaxed mx-auto">
+          <p className="text-sm text-muted-foreground max-w-md leading-relaxed mx-auto mt-1">
             {t.describeStrategy}
           </p>
         </div>
       </div>
 
-      {/* Capability chips */}
+      {/* ── Capability chips ── */}
       <div className="flex flex-wrap justify-center gap-2 max-w-lg">
         {CAPABILITY_CHIPS.map((chip) => (
           <span
             key={chip}
-            className="px-2.5 py-1 text-xs rounded-full border border-border/60 text-muted-foreground bg-muted/30"
+            className="inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-all duration-200 cursor-default"
+            style={{
+              background: "rgba(10,11,16,0.5)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              border: "1px solid rgba(30,32,53,0.7)",
+              color: "hsl(var(--muted-foreground))",
+            }}
+            onMouseEnter={e => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.borderColor = "rgba(240,160,80,0.25)";
+              el.style.color = "hsl(var(--foreground))";
+            }}
+            onMouseLeave={e => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.borderColor = "rgba(30,32,53,0.7)";
+              el.style.color = "hsl(var(--muted-foreground))";
+            }}
           >
             {chip}
           </span>
         ))}
       </div>
 
-      {/* Example categories grid */}
+      {/* ── Example category grid ── */}
       <div className="w-full max-w-2xl text-left space-y-4">
-        <p className="text-xs text-muted-foreground px-1">{t.examples}</p>
+        <p className="text-[11px] uppercase tracking-widest text-muted-foreground/50 font-medium px-1">
+          {t.examples}
+        </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {CATEGORIES.map((cat) => (
-            <div key={cat.label} className="space-y-2">
-              <div className={`flex items-center gap-1.5 text-xs font-medium px-1 ${cat.color.split(" ").filter(c => c.startsWith("text-")).join(" ")}`}>
+            <div
+              key={cat.label}
+              className="rounded-2xl overflow-hidden"
+              style={{
+                background: "rgba(10,11,16,0.5)",
+                backdropFilter: "blur(16px)",
+                WebkitBackdropFilter: "blur(16px)",
+                border: "1px solid rgba(30,32,53,0.6)",
+              }}
+            >
+              {/* Category header with colored left-accent bar */}
+              <div
+                className="flex items-center gap-2 px-3 py-2.5 text-xs font-semibold"
+                style={{
+                  borderLeft: `3px solid ${cat.accentColor}`,
+                  color: cat.accentColor,
+                  background: `linear-gradient(90deg, ${cat.accentColor}10 0%, transparent 100%)`,
+                }}
+              >
                 {cat.icon}
                 <span>{cat.label}</span>
               </div>
-              <div className="space-y-1.5">
+
+              {/* Divider */}
+              <div
+                className="h-px"
+                style={{ background: "rgba(30,32,53,0.6)" }}
+              />
+
+              {/* Example buttons */}
+              <div className="p-1.5 space-y-1">
                 {cat.examples.map((ex) => (
                   <button
                     key={ex.title}
                     onClick={() => onExample(ex.prompt)}
-                    className={`block w-full text-left px-3 py-2.5 rounded-xl border transition-colors ${cat.color}`}
+                    className="block w-full text-left px-3 py-2.5 rounded-xl transition-all duration-200 group"
+                    style={{
+                      background: "transparent",
+                      border: "1px solid transparent",
+                    }}
+                    onMouseEnter={e => {
+                      const el = e.currentTarget as HTMLElement;
+                      el.style.background = `${cat.accentColor}08`;
+                      el.style.borderColor = `${cat.accentColor}25`;
+                    }}
+                    onMouseLeave={e => {
+                      const el = e.currentTarget as HTMLElement;
+                      el.style.background = "transparent";
+                      el.style.borderColor = "transparent";
+                    }}
                   >
-                    <span className="text-sm font-medium text-foreground leading-snug">
+                    <span
+                      className="block text-xs font-medium leading-snug transition-colors duration-200"
+                      style={{ color: "hsl(var(--foreground))" }}
+                    >
                       {ex.title}
                     </span>
-                    <span className="block text-xs text-muted-foreground mt-0.5 leading-snug">
+                    <span
+                      className="block text-[11px] mt-0.5 leading-snug"
+                      style={{ color: "hsl(var(--muted-foreground))" }}
+                    >
                       {ex.desc}
                     </span>
                   </button>
@@ -173,5 +274,3 @@ export function WelcomeScreen({ onExample }: Props) {
     </div>
   );
 }
-
-

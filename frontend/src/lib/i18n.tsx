@@ -1,7 +1,7 @@
 import { createContext, useContext, type ReactNode } from "react";
 
 const messages = {
-  home: "Home", agent: "Agent", runs: "Runs", settings: "Settings",
+  home: "Home", agent: "Agent", paper: "Paper Trade", runs: "Runs", settings: "Settings",
   startResearch: "Start Research", describeStrategy: "Describe a trading strategy to get started.",
   prompt: "e.g. Create a dual MA crossover strategy for 000001.SZ, backtest 2024",
   send: "Send", loading: "Loading...", noRuns: "No runs yet. Go to Agent to create one.",

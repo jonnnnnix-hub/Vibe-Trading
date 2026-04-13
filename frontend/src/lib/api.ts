@@ -53,6 +53,15 @@ export const api = {
   getSessionMessages: (sid: string) => request<MessageItem[]>(`/sessions/${sid}/messages`),
   sseUrl: (sid: string) => `${BASE}/sessions/${sid}/events`,
 
+  // Paper Trading
+  getPaperPortfolio: () => request<PaperPortfolio>("/paper/portfolio"),
+  createPaperPortfolio: (initialCash?: number, name?: string) =>
+    request<PaperPortfolio>("/paper/portfolio", { method: "POST", body: JSON.stringify({ initial_cash: initialCash || 100000, name: name || "Default" }) }),
+  executePaperTrade: (symbol: string, side: "BUY" | "SELL", qty: number, price?: number) =>
+    request<PaperTradeResult>("/paper/trade", { method: "POST", body: JSON.stringify({ symbol, side, qty, price }) }),
+  getPaperTrades: () => request<PaperTrade[]>("/paper/trades"),
+  resetPaperPortfolio: () => request<{ status: string }>("/paper/portfolio", { method: "DELETE" }),
+
   // Swarm API
   listSwarmPresets: () => request<SwarmPreset[]>("/swarm/presets"),
   createSwarmRun: (preset_name: string, user_vars: Record<string, string>) =>
@@ -231,6 +240,46 @@ export interface SessionItem {
   created_at?: string;
   updated_at?: string;
   last_attempt_id?: string;
+}
+
+// --- Paper Trading types ---
+
+export interface PaperPosition {
+  symbol: string;
+  qty: number;
+  avg_price: number;
+  current_price: number;
+  market_value: number;
+  pnl: number;
+  pnl_pct: number;
+}
+
+export interface PaperTrade {
+  trade_id: string;
+  symbol: string;
+  side: "BUY" | "SELL";
+  qty: number;
+  price: number;
+  total_cost: number;
+  timestamp: string;
+  pnl?: number | null;
+}
+
+export interface PaperPortfolio {
+  portfolio_id: string;
+  name: string;
+  cash: number;
+  initial_cash: number;
+  positions: PaperPosition[];
+  total_value: number;
+  total_pnl: number;
+  total_pnl_pct: number;
+  created_at: string;
+  trades: PaperTrade[];
+}
+
+export interface PaperTradeResult extends PaperTrade {
+  portfolio_after: PaperPortfolio;
 }
 
 export interface MessageItem {

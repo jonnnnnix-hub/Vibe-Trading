@@ -967,6 +967,241 @@ async def cancel_swarm_run(run_id: str):
 
 
 # ============================================================================
+# Paper Trading API
+# ============================================================================
+
+import yfinance as yf
+
+# Resolve the paper portfolio path: use Fly.io volume when available, else local
+_PAPER_PORTFOLIO_PATH = Path("/app/agent/runs/paper_portfolio.json")
+if not _PAPER_PORTFOLIO_PATH.parent.exists():
+    _PAPER_PORTFOLIO_PATH = Path(__file__).resolve().parent / "runs" / "paper_portfolio.json"
+
+
+class CreatePortfolioRequest(BaseModel):
+    """Create or reset paper portfolio."""
+    initial_cash: float = Field(100000.0, description="Starting cash balance")
+    name: str = Field("Default", description="Portfolio name")
+
+
+class PaperTradeRequest(BaseModel):
+    """Execute a simulated trade."""
+    symbol: str = Field(..., description="Ticker symbol")
+    side: str = Field(..., description="BUY or SELL")
+    qty: float = Field(..., description="Number of shares/units")
+    price: Optional[float] = Field(None, description="Limit price; if omitted uses latest market price")
+
+
+def _load_paper_portfolio() -> Optional[Dict[str, Any]]:
+    """Load paper portfolio from disk."""
+    try:
+        if _PAPER_PORTFOLIO_PATH.exists():
+            return json.loads(_PAPER_PORTFOLIO_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+    return None
+
+
+def _save_paper_portfolio(data: Dict[str, Any]) -> None:
+    """Persist paper portfolio to disk."""
+    _PAPER_PORTFOLIO_PATH.parent.mkdir(parents=True, exist_ok=True)
+    _PAPER_PORTFOLIO_PATH.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def _get_latest_price(symbol: str) -> float:
+    """Fetch the latest price for a symbol via yfinance."""
+    try:
+        ticker = yf.Ticker(symbol.upper())
+        hist = ticker.history(period="1d", interval="1m")
+        if hist.empty:
+            hist = ticker.history(period="5d")
+        if hist.empty:
+            raise ValueError(f"No price data found for {symbol}")
+        return float(hist["Close"].iloc[-1])
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=f"Cannot fetch price for {symbol}: {exc}")
+
+
+def _build_portfolio_response(portfolio: Dict[str, Any]) -> Dict[str, Any]:
+    """Enrich portfolio with live current prices and PnL calculations."""
+    positions = portfolio.get("positions", {})
+    cash = float(portfolio.get("cash", 0))
+    initial_cash = float(portfolio.get("initial_cash", 100000))
+
+    enriched_positions = []
+    total_positions_value = 0.0
+
+    for symbol, pos in positions.items():
+        qty = float(pos["qty"])
+        avg_price = float(pos["avg_price"])
+        try:
+            current_price = _get_latest_price(symbol)
+        except Exception:
+            current_price = avg_price  # fallback
+        market_value = qty * current_price
+        cost_basis = qty * avg_price
+        pnl = market_value - cost_basis
+        pnl_pct = (pnl / cost_basis * 100) if cost_basis != 0 else 0.0
+        total_positions_value += market_value
+        enriched_positions.append({
+            "symbol": symbol,
+            "qty": qty,
+            "avg_price": avg_price,
+            "current_price": current_price,
+            "market_value": round(market_value, 2),
+            "pnl": round(pnl, 2),
+            "pnl_pct": round(pnl_pct, 4),
+        })
+
+    total_value = cash + total_positions_value
+    total_pnl = total_value - initial_cash
+    total_pnl_pct = (total_pnl / initial_cash * 100) if initial_cash != 0 else 0.0
+
+    return {
+        "portfolio_id": portfolio.get("portfolio_id"),
+        "name": portfolio.get("name", "Default"),
+        "cash": round(cash, 2),
+        "initial_cash": round(initial_cash, 2),
+        "positions": enriched_positions,
+        "total_value": round(total_value, 2),
+        "total_pnl": round(total_pnl, 2),
+        "total_pnl_pct": round(total_pnl_pct, 4),
+        "created_at": portfolio.get("created_at"),
+        "trades": portfolio.get("trades", []),
+    }
+
+
+@app.post("/paper/portfolio", dependencies=[Depends(require_auth)])
+async def create_paper_portfolio(request: CreatePortfolioRequest):
+    """Create or reset the paper trading portfolio."""
+    portfolio = {
+        "portfolio_id": str(uuid.uuid4()),
+        "name": request.name,
+        "cash": request.initial_cash,
+        "initial_cash": request.initial_cash,
+        "positions": {},
+        "trades": [],
+        "created_at": datetime.now().isoformat(),
+    }
+    _save_paper_portfolio(portfolio)
+    return {
+        "portfolio_id": portfolio["portfolio_id"],
+        "name": portfolio["name"],
+        "cash": portfolio["cash"],
+        "initial_cash": portfolio["initial_cash"],
+        "positions": [],
+        "total_value": portfolio["cash"],
+        "total_pnl": 0.0,
+        "total_pnl_pct": 0.0,
+        "created_at": portfolio["created_at"],
+        "trades": [],
+    }
+
+
+@app.get("/paper/portfolio")
+async def get_paper_portfolio():
+    """Get current paper portfolio state with live prices."""
+    portfolio = _load_paper_portfolio()
+    if not portfolio:
+        raise HTTPException(status_code=404, detail="No paper portfolio found. Create one first.")
+    return _build_portfolio_response(portfolio)
+
+
+@app.delete("/paper/portfolio", dependencies=[Depends(require_auth)])
+async def reset_paper_portfolio():
+    """Reset the paper portfolio (delete the file)."""
+    if _PAPER_PORTFOLIO_PATH.exists():
+        _PAPER_PORTFOLIO_PATH.unlink()
+    return {"status": "reset"}
+
+
+@app.post("/paper/trade", dependencies=[Depends(require_auth)])
+async def execute_paper_trade(request: PaperTradeRequest):
+    """Execute a simulated paper trade."""
+    portfolio = _load_paper_portfolio()
+    if not portfolio:
+        raise HTTPException(status_code=404, detail="No paper portfolio found. Create one first.")
+
+    side = request.side.upper()
+    if side not in ("BUY", "SELL"):
+        raise HTTPException(status_code=422, detail="side must be BUY or SELL")
+    if request.qty <= 0:
+        raise HTTPException(status_code=422, detail="qty must be positive")
+
+    symbol = request.symbol.upper()
+    price = request.price if request.price and request.price > 0 else _get_latest_price(symbol)
+    total_cost = price * request.qty
+
+    positions = portfolio.get("positions", {})
+    cash = float(portfolio["cash"])
+
+    trade_pnl = None
+
+    if side == "BUY":
+        if total_cost > cash:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Insufficient cash. Need ${total_cost:.2f}, have ${cash:.2f}"
+            )
+        cash -= total_cost
+        if symbol in positions:
+            existing = positions[symbol]
+            new_qty = existing["qty"] + request.qty
+            new_avg = (existing["avg_price"] * existing["qty"] + price * request.qty) / new_qty
+            positions[symbol] = {"qty": new_qty, "avg_price": new_avg}
+        else:
+            positions[symbol] = {"qty": request.qty, "avg_price": price}
+    else:  # SELL
+        if symbol not in positions:
+            raise HTTPException(status_code=422, detail=f"No position in {symbol}")
+        existing = positions[symbol]
+        if request.qty > existing["qty"]:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Cannot sell {request.qty} shares; only have {existing["qty"]}"
+            )
+        trade_pnl = (price - existing["avg_price"]) * request.qty
+        cash += total_cost
+        new_qty = existing["qty"] - request.qty
+        if new_qty < 1e-9:
+            del positions[symbol]
+        else:
+            positions[symbol] = {"qty": new_qty, "avg_price": existing["avg_price"]}
+
+    trade_id = str(uuid.uuid4())
+    trade_record = {
+        "trade_id": trade_id,
+        "symbol": symbol,
+        "side": side,
+        "qty": request.qty,
+        "price": round(price, 4),
+        "total_cost": round(total_cost, 2),
+        "timestamp": datetime.now().isoformat(),
+        "pnl": round(trade_pnl, 2) if trade_pnl is not None else None,
+    }
+
+    portfolio["cash"] = cash
+    portfolio["positions"] = positions
+    portfolio.setdefault("trades", []).append(trade_record)
+    _save_paper_portfolio(portfolio)
+
+    return {
+        **trade_record,
+        "portfolio_after": _build_portfolio_response(portfolio),
+    }
+
+
+@app.get("/paper/trades")
+async def get_paper_trades():
+    """Get all paper trade history."""
+    portfolio = _load_paper_portfolio()
+    if not portfolio:
+        return []
+    trades = portfolio.get("trades", [])
+    return list(reversed(trades))  # newest first
+
+
+# ============================================================================
 # Main Entry Point
 # ============================================================================
 

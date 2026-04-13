@@ -83,48 +83,61 @@ export function RunDetail() {
       </div>
     );
   }
-  if (!run) return <div className="p-8 text-red-500">Run not found</div>;
+  if (!run) return (
+    <div className="p-8 text-[#F87171]">Run not found</div>
+  );
 
   const ok = run.status === "success";
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="border-b p-4 space-y-3">
+    <div className="flex flex-col h-full bg-[#05060A]">
+      {/* Header — glass card */}
+      <div className="border-b border-[#1E2035]/50 bg-[#0A0B10]/60 backdrop-blur-2xl p-4 space-y-3">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="p-1 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            className="p-1.5 rounded-xl hover:bg-[#0F1117] transition-all duration-200 text-[#4A4E68] hover:text-[#E8E9F0] border border-transparent hover:border-[#1E2035]/50"
             title="Go back"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
-          {ok ? <CheckCircle2 className="h-5 w-5 text-success" /> : <XCircle className="h-5 w-5 text-danger" />}
-          <h1 className="font-mono text-sm font-medium">{runId}</h1>
-          {run.elapsed_seconds && <span className="text-xs text-muted-foreground">{run.elapsed_seconds.toFixed(1)}s</span>}
+          {ok ? (
+            <CheckCircle2 className="h-5 w-5 text-[#34D399] drop-shadow-[0_0_8px_rgba(52,211,153,0.6)] shrink-0" />
+          ) : (
+            <XCircle className="h-5 w-5 text-[#F87171] drop-shadow-[0_0_8px_rgba(248,113,113,0.6)] shrink-0" />
+          )}
+          <h1 className="font-mono text-sm font-medium text-[#E8E9F0]">{runId}</h1>
+          {run.elapsed_seconds && (
+            <span className="text-xs text-[#8B8FA3] font-mono">{run.elapsed_seconds.toFixed(1)}s</span>
+          )}
         </div>
-        {run.prompt && <p className="text-sm text-muted-foreground">{run.prompt}</p>}
+        {run.prompt && (
+          <p className="text-sm text-[#8B8FA3] leading-relaxed">{run.prompt}</p>
+        )}
         {run.metrics && <MetricsCard metrics={run.metrics as Record<string, number>} />}
 
-        <div className="flex items-center gap-1">
+        {/* Tab bar */}
+        <div className="flex items-center gap-1.5 flex-wrap">
           {TABS.filter(t => !t.hidden).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setTab(id)}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors",
-                tab === id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-sm transition-all duration-200 font-medium",
+                tab === id
+                  ? "bg-[#F0A050]/10 text-[#F0A050] border border-[#F0A050]/20 shadow-[0_0_12px_rgba(240,160,80,0.15)]"
+                  : "text-[#8B8FA3] hover:text-[#E8E9F0] hover:bg-[#0F1117] border border-transparent"
               )}
             >
               <Icon className="h-3.5 w-3.5" /> {label}
             </button>
           ))}
 
-          <div className="ml-auto flex gap-1">
+          <div className="ml-auto flex gap-1.5">
             {run.trade_log && run.trade_log.length > 0 && (
               <button
                 onClick={() => downloadCsv(`trades_${runId}.csv`, buildTradesCsv(run.trade_log!))}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs text-muted-foreground hover:bg-muted transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-[#8B8FA3] hover:text-[#E8E9F0] hover:bg-[#0F1117] border border-transparent hover:border-[#1E2035]/50 transition-all duration-200"
                 title={t.downloadTradesCsv}
               >
                 <Download className="h-3.5 w-3.5" /> {t.downloadTradesCsv}
@@ -133,7 +146,7 @@ export function RunDetail() {
             {run.metrics && (
               <button
                 onClick={() => downloadCsv(`metrics_${runId}.csv`, buildMetricsCsv(run.metrics!))}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs text-muted-foreground hover:bg-muted transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-[#8B8FA3] hover:text-[#E8E9F0] hover:bg-[#0F1117] border border-transparent hover:border-[#1E2035]/50 transition-all duration-200"
                 title={t.downloadMetricsCsv}
               >
                 <Download className="h-3.5 w-3.5" /> {t.downloadMetricsCsv}
@@ -161,9 +174,9 @@ function ChartTab({ run }: { run: RunData }) {
 
   if (entries.length === 0 && !hasEquity) {
     return (
-      <div className="p-8 text-center text-muted-foreground space-y-2">
-        <p className="text-sm">No chart data available</p>
-        <p className="text-xs">The backtest engine may not have generated price data. Check the artifacts/ directory.</p>
+      <div className="p-8 text-center space-y-2">
+        <p className="text-sm text-[#8B8FA3]">No chart data available</p>
+        <p className="text-xs text-[#4A4E68]">The backtest engine may not have generated price data. Check the artifacts/ directory.</p>
       </div>
     );
   }
@@ -171,14 +184,14 @@ function ChartTab({ run }: { run: RunData }) {
   return (
     <div className="p-4 space-y-4">
       {entries.map(([sym, bars]) => (
-        <div key={sym}>
-          <h3 className="text-sm font-medium mb-1">{sym}</h3>
+        <div key={sym} className="rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/40 backdrop-blur-sm p-3">
+          <h3 className="text-sm font-medium text-[#E8E9F0] mb-2 px-1">{sym}</h3>
           <CandlestickChart data={bars} markers={run.trade_markers?.filter(m => m.code === sym)} indicators={run.indicator_series?.[sym]} height={500} />
         </div>
       ))}
       {hasEquity && (
-        <div>
-          <h3 className="text-sm font-medium mb-1">Equity & Drawdown</h3>
+        <div className="rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/40 backdrop-blur-sm p-3">
+          <h3 className="text-sm font-medium text-[#E8E9F0] mb-2 px-1">Equity & Drawdown</h3>
           <EquityChart data={run.equity_curve!} height={280} />
         </div>
       )}
@@ -188,33 +201,51 @@ function ChartTab({ run }: { run: RunData }) {
 
 function TradesTab({ run }: { run: RunData }) {
   const trades = run.trade_log || [];
-  if (trades.length === 0) return <div className="p-8 text-muted-foreground text-sm">No trades recorded.</div>;
+  if (trades.length === 0) return (
+    <div className="p-8 text-[#8B8FA3] text-sm">No trades recorded.</div>
+  );
   return (
     <div className="p-4">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b text-left text-muted-foreground">
-            <th className="py-2 pr-4">Time</th>
-            <th className="py-2 pr-4">Code</th>
-            <th className="py-2 pr-4">Side</th>
-            <th className="py-2 pr-4">Price</th>
-            <th className="py-2 pr-4">Qty</th>
-            <th className="py-2">Reason</th>
-          </tr>
-        </thead>
-        <tbody>
-          {trades.map((tr, i) => (
-            <tr key={i} className="border-b last:border-0 hover:bg-muted/20">
-              <td className="py-2 pr-4 font-mono text-xs">{tr.time || tr.timestamp}</td>
-              <td className="py-2 pr-4">{tr.code}</td>
-              <td className={cn("py-2 pr-4 font-medium", tr.side === "BUY" ? "text-success" : "text-danger")}>{tr.side}</td>
-              <td className="py-2 pr-4 tabular-nums">{tr.price}</td>
-              <td className="py-2 pr-4 tabular-nums">{tr.qty}</td>
-              <td className="py-2 text-muted-foreground">{tr.reason}</td>
+      <div className="rounded-2xl border border-[#1E2035]/50 bg-[#0A0B10]/40 backdrop-blur-sm overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-[#1E2035]/50 bg-[#0F1117]">
+              <th className="py-3 px-4 text-left text-xs text-[#4A4E68] font-medium uppercase tracking-wide">Time</th>
+              <th className="py-3 px-4 text-left text-xs text-[#4A4E68] font-medium uppercase tracking-wide">Code</th>
+              <th className="py-3 px-4 text-left text-xs text-[#4A4E68] font-medium uppercase tracking-wide">Side</th>
+              <th className="py-3 px-4 text-left text-xs text-[#4A4E68] font-medium uppercase tracking-wide">Price</th>
+              <th className="py-3 px-4 text-left text-xs text-[#4A4E68] font-medium uppercase tracking-wide">Qty</th>
+              <th className="py-3 px-4 text-left text-xs text-[#4A4E68] font-medium uppercase tracking-wide">Reason</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {trades.map((tr, i) => (
+              <tr
+                key={i}
+                className={cn(
+                  "border-b border-[#1E2035]/30 last:border-0 transition-colors duration-150",
+                  i % 2 === 0 ? "bg-transparent" : "bg-[#0F1117]/40",
+                  "hover:bg-[#161822]/60"
+                )}
+              >
+                <td className="py-2.5 px-4 font-mono text-xs text-[#8B8FA3]">{tr.time || tr.timestamp}</td>
+                <td className="py-2.5 px-4 text-[#E8E9F0]">{tr.code}</td>
+                <td className={cn(
+                  "py-2.5 px-4 font-semibold text-xs uppercase tracking-wide",
+                  tr.side === "BUY"
+                    ? "text-[#34D399] drop-shadow-[0_0_4px_rgba(52,211,153,0.4)]"
+                    : "text-[#F87171] drop-shadow-[0_0_4px_rgba(248,113,113,0.4)]"
+                )}>
+                  {tr.side}
+                </td>
+                <td className="py-2.5 px-4 tabular-nums text-[#E8E9F0] font-mono text-xs">{tr.price}</td>
+                <td className="py-2.5 px-4 tabular-nums text-[#E8E9F0] font-mono text-xs">{tr.qty}</td>
+                <td className="py-2.5 px-4 text-[#8B8FA3] text-xs">{tr.reason}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -222,15 +253,29 @@ function TradesTab({ run }: { run: RunData }) {
 function CodeTab({ code }: { code: Record<string, string> }) {
   const files = Object.entries(code);
   const [active, setActive] = useState(files[0]?.[0] || "");
-  if (files.length === 0) return <div className="p-8 text-muted-foreground text-sm">No code files.</div>;
+  if (files.length === 0) return (
+    <div className="p-8 text-[#8B8FA3] text-sm">No code files.</div>
+  );
   return (
     <div className="flex flex-col h-full">
-      <div className="flex gap-1 p-2 border-b">
+      {/* File tab pills */}
+      <div className="flex gap-1.5 p-3 border-b border-[#1E2035]/50 bg-[#0A0B10]/40 backdrop-blur-sm flex-wrap">
         {files.map(([name]) => (
-          <button key={name} onClick={() => setActive(name)} className={cn("px-3 py-1 rounded text-xs font-mono", active === name ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")}>{name}</button>
+          <button
+            key={name}
+            onClick={() => setActive(name)}
+            className={cn(
+              "px-3 py-1.5 rounded-xl text-xs font-mono transition-all duration-200",
+              active === name
+                ? "bg-[#F0A050]/10 text-[#F0A050] border border-[#F0A050]/20"
+                : "text-[#8B8FA3] hover:text-[#E8E9F0] hover:bg-[#0F1117] border border-[#1E2035]/40"
+            )}
+          >
+            {name}
+          </button>
         ))}
       </div>
-      <div className="flex-1 overflow-auto p-3 text-[11px] leading-relaxed bg-muted/20 [&_pre]:m-0 [&_pre]:bg-transparent [&_code]:text-[11px]">
+      <div className="flex-1 overflow-auto p-4 bg-[#05060A] [&_pre]:m-0 [&_pre]:bg-transparent [&_code]:text-[11px] [&_pre]:leading-relaxed [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#1E2035] [&::-webkit-scrollbar-thumb]:rounded-full">
         <ReactMarkdown rehypePlugins={rehypePlugins}>
           {`\`\`\`python\n${code[active] || ""}\n\`\`\``}
         </ReactMarkdown>
@@ -238,4 +283,3 @@ function CodeTab({ code }: { code: Record<string, string> }) {
     </div>
   );
 }
-

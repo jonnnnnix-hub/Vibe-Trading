@@ -4,9 +4,9 @@ import { useI18n } from "@/lib/i18n";
 import { getMetricLabel, DISPLAY_ORDER, formatMetricVal, metricSentiment } from "@/lib/formatters";
 
 const SENTIMENT = {
-  positive: "text-success",
-  neutral: "text-foreground",
-  negative: "text-danger",
+  positive: "text-[#34D399]",
+  neutral: "text-[#E8E9F0]",
+  negative: "text-[#F87171]",
 } as const;
 
 interface Props {
@@ -26,16 +26,19 @@ export const MetricsCard = memo(function MetricsCard({ metrics, compact = false 
 
   return (
     <div className={cn(
-      "grid gap-1.5 rounded-xl border border-border/60 bg-muted/20 p-3",
+      "grid gap-px rounded-2xl overflow-hidden border border-[#1E2035]/50",
       compact ? "grid-cols-3" : "grid-cols-[repeat(auto-fit,minmax(120px,1fr))]"
     )}>
       {shown.map(({ k, v }) => (
-        <div key={k} className="text-center py-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">
+        <div
+          key={k}
+          className="text-center py-2.5 px-2 bg-[#0A0B10]/60 backdrop-blur-2xl"
+        >
+          <p className="text-[10px] text-[#4A4E68] uppercase tracking-widest font-medium mb-0.5">
             {getMetricLabel(k, t as unknown as Record<string, string>)}
           </p>
           <p className={cn(
-            "text-sm font-bold font-mono tabular-nums mt-0.5",
+            "text-sm font-bold font-mono tabular-nums",
             SENTIMENT[metricSentiment(k, v)]
           )}>
             {formatMetricVal(k, v)}
