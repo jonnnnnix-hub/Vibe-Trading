@@ -180,7 +180,7 @@ export function AutoBotPanel({
   const [botStatus, setBotStatus] = useState<BotStatus | null>(null);
   const [botLoading, setBotLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
-  const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Config state
   const [selectedStrategy, setSelectedStrategy] = useState("expert_committee");
