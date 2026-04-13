@@ -1158,7 +1158,7 @@ async def execute_paper_trade(request: PaperTradeRequest):
         if request.qty > existing["qty"]:
             raise HTTPException(
                 status_code=422,
-                detail=f"Cannot sell {request.qty} shares; only have {existing["qty"]}"
+                detail=f"Cannot sell {request.qty} shares; only have {existing['qty']}"
             )
         trade_pnl = (price - existing["avg_price"]) * request.qty
         cash += total_cost
