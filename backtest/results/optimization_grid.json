@@ -1,0 +1,222 @@
+[
+  {
+    "name": "BASE(tgt25/stop35/hold5)",
+    "trades": 139,
+    "wr": 0.5468,
+    "pnl": 157388.83,
+    "sharpe": 1.7133,
+    "pf": 1.5682,
+    "dd": 25.7134,
+    "hold": 2.73,
+    "exits": "{'option_target': 65, 'time_exit': 25, 'option_stop': 49}"
+  },
+  {
+    "name": "tgt15/stop35",
+    "trades": 140,
+    "wr": 0.5929,
+    "pnl": 128272.41,
+    "sharpe": 1.6228,
+    "pf": 1.5055,
+    "dd": 24.9051,
+    "hold": 2.26,
+    "exits": "{'option_target': 82, 'time_exit': 12, 'option_stop': 46}"
+  },
+  {
+    "name": "tgt20/stop35",
+    "trades": 139,
+    "wr": 0.5755,
+    "pnl": 166310.79,
+    "sharpe": 1.8946,
+    "pf": 1.6503,
+    "dd": 23.7425,
+    "hold": 2.52,
+    "exits": "{'option_target': 76, 'time_exit': 17, 'option_stop': 46}"
+  },
+  {
+    "name": "tgt15/stop30",
+    "trades": 140,
+    "wr": 0.5786,
+    "pnl": 125339.62,
+    "sharpe": 1.6209,
+    "pf": 1.5027,
+    "dd": 24.2131,
+    "hold": 2.09,
+    "exits": "{'option_target': 80, 'option_stop': 53, 'time_exit': 7}"
+  },
+  {
+    "name": "tgt15/stop25",
+    "trades": 140,
+    "wr": 0.5571,
+    "pnl": 119428.67,
+    "sharpe": 1.5607,
+    "pf": 1.4966,
+    "dd": 23.5288,
+    "hold": 1.94,
+    "exits": "{'option_target': 77, 'option_stop': 59, 'time_exit': 4}"
+  },
+  {
+    "name": "tgt20/stop30",
+    "trades": 139,
+    "wr": 0.554,
+    "pnl": 158939.25,
+    "sharpe": 1.847,
+    "pf": 1.625,
+    "dd": 23.5465,
+    "hold": 2.33,
+    "exits": "{'option_target': 74, 'option_stop': 54, 'time_exit': 11}"
+  },
+  {
+    "name": "tgt20/stop25",
+    "trades": 139,
+    "wr": 0.5324,
+    "pnl": 153028.3,
+    "sharpe": 1.7953,
+    "pf": 1.6234,
+    "dd": 22.9067,
+    "hold": 2.17,
+    "exits": "{'option_target': 71, 'option_stop': 60, 'time_exit': 8}"
+  },
+  {
+    "name": "tgt15/stop25/hold3",
+    "trades": 142,
+    "wr": 0.5352,
+    "pnl": 92585.03,
+    "sharpe": 1.2604,
+    "pf": 1.3879,
+    "dd": 25.423,
+    "hold": 1.77,
+    "exits": "{'option_target': 69, 'option_stop': 56, 'time_exit': 17}"
+  },
+  {
+    "name": "tgt15/stop25/hold4",
+    "trades": 140,
+    "wr": 0.5643,
+    "pnl": 107846.45,
+    "sharpe": 1.4282,
+    "pf": 1.4542,
+    "dd": 24.6802,
+    "hold": 1.89,
+    "exits": "{'option_target': 74, 'option_stop': 59, 'time_exit': 7}"
+  },
+  {
+    "name": "tgt15/stop30/hold3",
+    "trades": 142,
+    "wr": 0.5563,
+    "pnl": 97452.12,
+    "sharpe": 1.311,
+    "pf": 1.3921,
+    "dd": 26.2806,
+    "hold": 1.86,
+    "exits": "{'option_target': 72, 'option_stop': 47, 'time_exit': 23}"
+  },
+  {
+    "name": "tgt15/stop30/hold4",
+    "trades": 140,
+    "wr": 0.5857,
+    "pnl": 114133.32,
+    "sharpe": 1.4936,
+    "pf": 1.4641,
+    "dd": 25.4422,
+    "hold": 2.01,
+    "exits": "{'option_target': 77, 'option_stop': 51, 'time_exit': 12}"
+  },
+  {
+    "name": "tgt15/stop25+BL",
+    "trades": 136,
+    "wr": 0.5588,
+    "pnl": 123857.55,
+    "sharpe": 1.6014,
+    "pf": 1.5388,
+    "dd": 22.7242,
+    "hold": 1.94,
+    "exits": "{'option_target': 75, 'option_stop': 57, 'time_exit': 4}"
+  },
+  {
+    "name": "tgt15/stop30+BL",
+    "trades": 136,
+    "wr": 0.5809,
+    "pnl": 129768.5,
+    "sharpe": 1.6634,
+    "pf": 1.5436,
+    "dd": 23.3961,
+    "hold": 2.1,
+    "exits": "{'option_target': 78, 'option_stop': 51, 'time_exit': 7}"
+  },
+  {
+    "name": "tgt15/stop25/hold3+BL",
+    "trades": 138,
+    "wr": 0.5362,
+    "pnl": 97013.91,
+    "sharpe": 1.3046,
+    "pf": 1.4254,
+    "dd": 24.4457,
+    "hold": 1.78,
+    "exits": "{'option_target': 67, 'option_stop': 54, 'time_exit': 17}"
+  },
+  {
+    "name": "tgt15/stop25/hold4+BL",
+    "trades": 136,
+    "wr": 0.5662,
+    "pnl": 112275.33,
+    "sharpe": 1.4706,
+    "pf": 1.495,
+    "dd": 23.7918,
+    "hold": 1.89,
+    "exits": "{'option_target': 72, 'option_stop': 57, 'time_exit': 7}"
+  },
+  {
+    "name": "tgt15/stop25+ivfloor20",
+    "trades": 129,
+    "wr": 0.5504,
+    "pnl": 98905.3,
+    "sharpe": 1.2887,
+    "pf": 1.4356,
+    "dd": 27.7528,
+    "hold": 1.93,
+    "exits": "{'option_stop': 55, 'option_target': 70, 'time_exit': 4}"
+  },
+  {
+    "name": "tgt15/stop25+ivfloor25",
+    "trades": 97,
+    "wr": 0.5361,
+    "pnl": 83255.44,
+    "sharpe": 1.2774,
+    "pf": 1.4788,
+    "dd": 30.2216,
+    "hold": 2.02,
+    "exits": "{'option_stop': 42, 'option_target': 51, 'time_exit': 4}"
+  },
+  {
+    "name": "tgt15/stop25/d40-46",
+    "trades": 114,
+    "wr": 0.5614,
+    "pnl": 98779.0,
+    "sharpe": 1.4385,
+    "pf": 1.5071,
+    "dd": 22.4987,
+    "hold": 1.89,
+    "exits": "{'option_target': 63, 'option_stop': 48, 'time_exit': 3}"
+  },
+  {
+    "name": "tgt15/stop25/d38-44",
+    "trades": 91,
+    "wr": 0.6154,
+    "pnl": 127725.84,
+    "sharpe": 1.8693,
+    "pf": 2.0647,
+    "dd": 13.0899,
+    "hold": 2.08,
+    "exits": "{'option_target': 55, 'option_stop': 32, 'time_exit': 4}"
+  },
+  {
+    "name": "tgt15/stop25/d35-46",
+    "trades": 170,
+    "wr": 0.5529,
+    "pnl": 138112.37,
+    "sharpe": 1.5719,
+    "pf": 1.4687,
+    "dd": 21.7325,
+    "hold": 1.9,
+    "exits": "{'option_target': 93, 'option_stop': 71, 'time_exit': 6}"
+  }
+]

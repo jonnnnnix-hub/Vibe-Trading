@@ -62,51 +62,74 @@ BACKTEST_END   = date(2026, 4, 11)
 OPTION_T_YEARS = 20 / 252         # 20 trading days / 252, per spec
 
 # Strategy configs — mirrors autobot.py AutoBot.configure()
-# v2 ADJUSTMENTS (from backtest analysis):
-#   A. max_hold 20→7d  (time exits were devastating: -$694K)
-#   B. option_stop_pct 30%  (cap max loss on option premium)
-#   C. trailing_activation 1.5→3.0%, trailing_distance 1.0→2.0%  (stop whipsaw)
-#   D. delta_range (0.40, 0.50)  (slightly OTM preference)
-#   E. iv_filter: skip entry when 5-day IV trend is declining
+# v3 ADJUSTMENTS (from deep statistical analysis of v2 trades):
+#   v2 base: A. max_hold 20→10d  B. option_stop 60%  C. trailing 3.0/2.0  D. delta 0.30-0.55  E. IV filter
+#   v3 new:
+#     F. Delta tightened: 0.38-0.46 (sweet spot: 62% WR; 0.46+ drops to 38%)
+#     G. Day-of-week filter: skip Tuesday+Friday entries (Tue=32.6%, Fri=38.9%)
+#     H. Symbol blacklist: exclude chronic losers (v2 data-backed)
+#     I. Price ceiling: skip stocks >$800 ($1000+ = 30% WR)
+#     J. Confidence dead-zone filter: skip [0.65, 0.78) (41-43% WR zone)
+#     K. Max hold tightened: 10→5 days (winners avg 4.2d, drifters lose to theta)
+#     L. Option stop tightened: 60→35% (cut losers before -56% avg)
+#     M. IV floor: skip entries when iv_at_entry < 0.25 (low IV = 39% WR)
+#     N. Option profit target: +25% option P&L exit (catch winners before theta eats them)
+#        (was relying on +5% underlying = +128% option avg — way too late)
 STRATEGY_CONFIGS = {
     "momentum_scanner": {
         "target_pct":          5.0,
         "trailing_activation": 3.0,
         "trailing_distance":   2.0,
-        "hard_stop_pct":       None,        # underlying hard stop (disabled)
-        "option_stop_pct":     60.0,        # max loss on option premium
-        "max_hold_days":       10,           # sweet spot: 7-10d
+        "hard_stop_pct":       None,
+        "option_stop_pct":     35.0,
+        "option_target_pct":   25.0,
+        "max_hold_days":       5,
         "min_hold_days":       1,
-        "delta_min":           0.30,        # slightly OTM to ATM range
-        "delta_max":           0.55,
-        "iv_filter":           True,        # skip if 5d IV declining >5%
-        "iv_decline_threshold": -5.0,       # only filter steep IV drops
+        "delta_min":           0.38,
+        "delta_max":           0.46,
+        "iv_filter":           True,
+        "iv_decline_threshold": -5.0,
+        # v3 entry filters
+        "skip_days":           [1],
+        "confidence_dead_zone": (0.66, 0.74),
+        "symbol_blacklist":    ["HD", "DHR", "BRK_B", "AMGN"],
     },
     "expert_committee": {
         "target_pct":          5.0,
         "trailing_activation": 3.0,
         "trailing_distance":   2.0,
         "hard_stop_pct":       None,
-        "option_stop_pct":     60.0,
-        "max_hold_days":       10,
+        "option_stop_pct":     30.0,          # v3.1: tightened from 35% (optimal at 30%)
+        "option_target_pct":   12.0,          # v3.1: tightened from 25% → captures quick wins
+        "max_hold_days":       4,             # v3.1: reduced from 5 → winners complete in ~2d
         "min_hold_days":       1,
-        "delta_min":           0.30,
-        "delta_max":           0.55,
+        "delta_min":           0.38,          # v3: sweet spot lower bound
+        "delta_max":           0.44,          # v3.1: tightened from 0.46 → removes weak tail
         "iv_filter":           True,
         "iv_decline_threshold": -5.0,
+        # v3.1: removed skip_days and confidence_dead_zone — they reduce
+        # trade count without proportional WR gain on 173-ticker universe
+        "skip_days":           [],
+        "confidence_dead_zone": None,
+        "symbol_blacklist":    [],
     },
     "aggressive_momentum": {
         "target_pct":          5.0,
         "trailing_activation": 3.0,
         "trailing_distance":   2.0,
         "hard_stop_pct":       5.0,
-        "option_stop_pct":     60.0,
-        "max_hold_days":       10,
+        "option_stop_pct":     35.0,
+        "option_target_pct":   25.0,
+        "max_hold_days":       5,
         "min_hold_days":       2,
-        "delta_min":           0.30,
-        "delta_max":           0.55,
+        "delta_min":           0.38,
+        "delta_max":           0.46,
         "iv_filter":           True,
         "iv_decline_threshold": -5.0,
+        # v3 entry filters
+        "skip_days":           [1],
+        "confidence_dead_zone": (0.66, 0.74),
+        "symbol_blacklist":    ["HD", "DHR", "BRK_B", "AMGN"],
     },
 }
 
@@ -803,13 +826,14 @@ class OptionsBacktestEngine:
     ) -> Optional[str]:
         """Return exit reason string if position should be closed, else None.
 
-        Priority order (v2 — updated from backtest analysis):
+        Priority order (v3.1):
           0.   Min hold period gate
-          0.25 Option premium stop (new — -30% on option value)
+          0.2  Option profit target (v3.1 — +25% option P&L)
+          0.25 Option premium stop (-35% on option value)
           0.5  Hard stop (on underlying % move)
           1-2  Trailing activation + trigger (on underlying % move)
           3.   Target profit (on underlying % move)
-          4.   Time exit at max_hold_days (now 7d, was 20d)
+          4.   Time exit at max_hold_days (5d)
         """
         cfg = self.cfg
         pnl_pct = ((current_underlying - pos.underlying_entry) / pos.underlying_entry) * 100
@@ -818,12 +842,21 @@ class OptionsBacktestEngine:
         if pos.days_held < cfg["min_hold_days"]:
             return None
 
-        # Step 0.25: Option premium stop (NEW in v2)
+        # Compute option P&L once for both option-level exits
+        current_opt_price = pos.reprice(current_underlying)
+        opt_pnl_pct = ((current_opt_price - pos.option_entry_price) / pos.option_entry_price) * 100
+
+        # Step 0.2: Option profit target (NEW in v3.1)
+        # Catch winners early before theta decay eats the premium
+        option_target = cfg.get("option_target_pct")
+        if option_target is not None:
+            if opt_pnl_pct >= option_target:
+                return "option_target"
+
+        # Step 0.25: Option premium stop (v2)
         # Caps max loss per trade based on option price, not underlying move
         option_stop = cfg.get("option_stop_pct")
         if option_stop is not None:
-            current_opt_price = pos.reprice(current_underlying)
-            opt_pnl_pct = ((current_opt_price - pos.option_entry_price) / pos.option_entry_price) * 100
             if opt_pnl_pct <= -abs(option_stop):
                 return "option_stop"
 
@@ -866,19 +899,53 @@ class OptionsBacktestEngine:
         entry_close: float,
         signal_result: Dict[str, Any],
     ) -> Optional[OptionPosition]:
-        """Size and open an option position per the spec (v2 with filters).
+        """Size and open an option position per the spec (v3 with filters).
 
-        Per spec + v2 adjustments:
+        Per spec + v2 base + v3 enhancements:
           - Strike: next $5 increment above current close
           - T: 20 trading days / 252
           - σ: iv30d from ORATS / 100 (or DEFAULT_IV)
           - Position sizing: $10,000 notional
-          - NEW (E): IV filter — skip if 5-day IV trend is declining
-          - NEW (D): Delta filter — skip if delta outside 0.40-0.50 range
+          - (E): IV filter — skip if 5-day IV trend is declining
+          - (D/F): Delta filter — 0.38-0.52 (v3 tightened)
+          - (G): Day-of-week filter — skip Tuesday entries
+          - (H): Symbol blacklist — exclude chronic losers
+          - (I): Price ceiling — skip stocks >$800
+          - (J): Confidence dead-zone filter — skip [0.65, 0.73)
         """
+        # ── v3 Adjustment H: Symbol blacklist ─────────────────────────────────
+        blacklist = self.cfg.get("symbol_blacklist", [])
+        if symbol in blacklist or symbol.replace(".", "_") in blacklist:
+            return None
+
+        # ── v3 Adjustment G: Day-of-week filter ──────────────────────────────
+        skip_days = self.cfg.get("skip_days", [])
+        if skip_days and entry_date.weekday() in skip_days:
+            return None
+        # Legacy support for skip_tuesdays
+        if self.cfg.get("skip_tuesdays", False) and entry_date.weekday() == 1:
+            return None
+
+        # ── v3 Adjustment I: Price ceiling filter ─────────────────────────────
+        max_price = self.cfg.get("max_underlying_price")
+        if max_price is not None and entry_close > max_price:
+            return None
+
+        # ── v3 Adjustment J: Confidence dead-zone filter ──────────────────────
+        conf_dead = self.cfg.get("confidence_dead_zone")
+        if conf_dead is not None:
+            conf = signal_result.get("confidence", 0.0)
+            if conf_dead[0] <= conf < conf_dead[1]:
+                return None
+
         # IV from ORATS
         orats = self._get_orats(symbol)
         iv    = get_iv_for_date(orats, entry_date)
+
+        # ── v3 Adjustment M: IV floor filter ───────────────────────────────
+        iv_floor = self.cfg.get("iv_floor")
+        if iv_floor is not None and iv < iv_floor:
+            return None
 
         # ── Adjustment E: IV trend filter ─────────────────────────────────────
         if self.cfg.get("iv_filter", False):

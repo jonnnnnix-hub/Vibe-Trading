@@ -384,7 +384,8 @@ def main() -> None:
         if cc and cc.get("avg_confidence_winners") is not None:
             print(f"Confidence Calibration — {name}:")
             print(f"  Avg confidence (winners):  {cc['avg_confidence_winners']:.4f}")
-            print(f"  Avg confidence (losers):   {cc['avg_confidence_losers']:.4f}")
+            losers_conf = cc.get('avg_confidence_losers')
+            print(f"  Avg confidence (losers):   {losers_conf:.4f}" if losers_conf is not None else "  Avg confidence (losers):   N/A")
             print(f"  Spread:                    {cc.get('confidence_spread', 'N/A')}")
             print()
 

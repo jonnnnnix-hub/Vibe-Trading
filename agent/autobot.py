@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-"""AutoBot v2 — Auto-trading bot backend for Vibe-Trading.
+"""AutoBot v3.1 — Auto-trading bot backend for Vibe-Trading.
 
 Implements three strategies from the Syntax-AI backtesting engine:
   1. Momentum Scanner    (v5 — 3/5 scoring)
   2. Expert Committee    (v9 — 5-expert vote)  ← recommended
   3. Aggressive Momentum (v10_aggressive — expert vote + hard stop)
 
-v2 Adjustments (from 90-stock backtest analysis, Jan 2025–Apr 2026):
-  A. max_hold_days: 20 → 10  (time exits were -$694K total P&L)
-  B. option_stop_pct: 60%    (cap max loss on option premium)
-  C. trailing: 1.5%/1.0% → 3.0%/2.0%  (stop premature whipsaw exits)
-  D. delta range: 0.40-0.50 (slightly OTM preference)
-  E. IV filter: skip entry when 5-day IV trend is declining
+v3.1 Parameters (optimized from 173-ticker backtest — 68.1% WR, 1.81 Sharpe):
+  A. option_target_pct: 12%    (NEW: option-level take-profit)
+  B. option_stop_pct: 30%      (tightened from 60%)
+  C. max_hold_days: 4          (reduced from 10 — winners avg 2.0d)
+  D. delta range: [0.38, 0.44] (tightened upper bound from 0.50)
+  E. trailing: 3.0%/2.0%       (activation / distance)
+  F. IV filter: skip entry when 5-day IV declining >5%
 
 Signals are generated against a universe of watchlist symbols via yfinance
 and executed against the paper trading portfolio stored in the runs directory.
@@ -80,14 +81,19 @@ DEFAULT_STATE: Dict[str, Any] = {
     "total_signals_generated": 0,
     "total_trades_executed": 0,
     "config": {
-        # v2 parameters (updated from backtest analysis)
+        # v3.1 parameters (optimized from 173-ticker backtest — 68.1% WR)
         "target_pct": 5.0,
-        "trailing_activation": 3.0,       # was 1.5 — widened to reduce whipsaw
-        "trailing_distance": 2.0,         # was 1.0 — let winners breathe
-        "hard_stop_pct": None,            # underlying stop (disabled for EC/MS)
-        "option_stop_pct": 60.0,          # NEW: max loss on option premium
-        "max_hold_days": 10,              # was 20 — sweet spot 7-10d
+        "trailing_activation": 3.0,
+        "trailing_distance": 2.0,
+        "hard_stop_pct": None,
+        "option_stop_pct": 30.0,          # v3.1: tightened from 60% → 30%
+        "option_target_pct": 12.0,        # v3.1: NEW — option-level take-profit
+        "max_hold_days": 4,               # v3.1: reduced from 10 → 4
         "min_hold_days": 1,
+        "delta_min": 0.38,                # v3.1: option delta sweet spot
+        "delta_max": 0.44,                # v3.1: tightened upper bound
+        "iv_filter": True,
+        "iv_decline_threshold": -5.0,
     },
 }
 
@@ -570,8 +576,9 @@ def check_exits(
     trailing_activation = cfg.get("trailing_activation", 3.0)
     trailing_distance = cfg.get("trailing_distance", 2.0)
     hard_stop_pct = cfg.get("hard_stop_pct", None)
-    option_stop_pct = cfg.get("option_stop_pct", 60.0)
-    max_hold_days = cfg.get("max_hold_days", 10)
+    option_stop_pct = cfg.get("option_stop_pct", 30.0)
+    option_target_pct = cfg.get("option_target_pct", 12.0)  # v3.1
+    max_hold_days = cfg.get("max_hold_days", 4)
     min_hold_days = cfg.get("min_hold_days", 1)
 
     tracking = bot_state.get("position_tracking", {})
@@ -598,11 +605,24 @@ def check_exits(
         if days_held < min_hold_days:
             continue
 
-        # Step 0.25: Option premium stop (v2)
-        # For paper trading (equity positions), we approximate option leverage
-        # by checking if the underlying loss × ~6x leverage exceeds option_stop_pct
+        # Step 0.2: Option premium target (v3.1)
+        # Approximate option gain using ~6x delta leverage
+        if option_target_pct is not None:
+            approx_option_gain = pnl_pct * 6
+            if approx_option_gain >= abs(option_target_pct):
+                sells.append({
+                    "symbol": symbol,
+                    "reason": "option_target",
+                    "price": current_price,
+                    "qty": qty,
+                    "pnl_pct": round(pnl_pct, 4),
+                })
+                continue
+
+        # Step 0.3: Option premium stop (v3.1 — tightened to 30%)
+        # For paper trading, approximate option leverage via ~6x delta
         if option_stop_pct is not None:
-            approx_option_loss = pnl_pct * 6  # rough delta leverage for slightly OTM
+            approx_option_loss = pnl_pct * 6
             if approx_option_loss <= -abs(option_stop_pct):
                 sells.append({
                     "symbol": symbol,
@@ -727,28 +747,37 @@ class AutoBot:
                 raise ValueError(f"Unknown strategy '{strategy}'. Choose from: {self.STRATEGIES}")
             self.state["strategy"] = strategy
 
-            # Apply strategy-specific config defaults (v2 parameters)
+            # Apply strategy-specific config defaults (v3.1 parameters)
             if strategy == "aggressive_momentum":
                 self.state["config"]["hard_stop_pct"] = 5.0
-                self.state["config"]["option_stop_pct"] = 60.0
+                self.state["config"]["option_stop_pct"] = 30.0
+                self.state["config"]["option_target_pct"] = 12.0
                 self.state["config"]["trailing_activation"] = 3.0
                 self.state["config"]["trailing_distance"] = 2.0
-                self.state["config"]["max_hold_days"] = 10
+                self.state["config"]["max_hold_days"] = 4
                 self.state["config"]["min_hold_days"] = 2
+                self.state["config"]["delta_min"] = 0.38
+                self.state["config"]["delta_max"] = 0.44
             elif strategy == "expert_committee":
                 self.state["config"]["hard_stop_pct"] = None
-                self.state["config"]["option_stop_pct"] = 60.0
+                self.state["config"]["option_stop_pct"] = 30.0
+                self.state["config"]["option_target_pct"] = 12.0
                 self.state["config"]["trailing_activation"] = 3.0
                 self.state["config"]["trailing_distance"] = 2.0
-                self.state["config"]["max_hold_days"] = 10
+                self.state["config"]["max_hold_days"] = 4
                 self.state["config"]["min_hold_days"] = 1
+                self.state["config"]["delta_min"] = 0.38
+                self.state["config"]["delta_max"] = 0.44
             else:  # momentum_scanner
                 self.state["config"]["hard_stop_pct"] = None
-                self.state["config"]["option_stop_pct"] = 60.0
+                self.state["config"]["option_stop_pct"] = 30.0
+                self.state["config"]["option_target_pct"] = 12.0
                 self.state["config"]["trailing_activation"] = 3.0
                 self.state["config"]["trailing_distance"] = 2.0
-                self.state["config"]["max_hold_days"] = 10
+                self.state["config"]["max_hold_days"] = 4
                 self.state["config"]["min_hold_days"] = 1
+                self.state["config"]["delta_min"] = 0.38
+                self.state["config"]["delta_max"] = 0.44
 
         if watchlist is not None:
             self.state["watchlist"] = [s.upper() for s in watchlist]
