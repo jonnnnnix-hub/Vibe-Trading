@@ -58,7 +58,7 @@ class SignalEngine:
     # ── v4 new parameters ──
     TOP_QUANTILE = 0.85     # only top 15% of momentum (was median in v3)
     MAX_POSITIONS = 8       # tight cap for concentration + lower exposure
-    BEAR_THRESHOLD = 0.40   # market is "bear" if <40% stocks above 200-SMA
+    BEAR_THRESHOLD = 0.50   # market is "bear" if <50% stocks above 200-SMA (tightened from 0.40)
     RSI_WINDOW = 14
     RSI_OVERSOLD = 35       # RSI threshold for bear-market entries
     SUPPORT_SMA = 50        # near-support reference
