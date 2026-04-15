@@ -22,6 +22,128 @@ import pandas as pd
 from backtest.models import TradeRecord
 
 
+# ─── Quality Gate Acceptance Criteria ───
+
+# Tier 1: Minimum bar (required for all strategies)
+TIER_1 = {
+    "wf_consistency_min": 0.60,   # ≥60% of windows profitable
+    "bs_prob_positive_min": 0.90, # ≥90% bootstrap probability of positive Sharpe
+    "trade_count_min": 30,         # minimum trades for CLT
+    "max_drawdown_max": -0.50,    # absolute circuit breaker
+}
+
+# Tier 2: Statistical significance (required for deployment)
+TIER_2 = {
+    "mc_p_value_max": 0.10,       # marginal significance that order matters
+    "bs_ci_lower_min": 0.0,       # bootstrap CI must not include zero
+    "wf_sharpe_std_max": 1.0,     # performance shouldn't vary wildly
+    "wf_consistency_min": 0.80,   # ≥80% windows profitable
+}
+
+# Tier 3: High conviction (aspirational)
+TIER_3 = {
+    "mc_p_value_max": 0.05,       # conventional statistical significance
+    "bs_ci_lower_min": 0.3,       # confidently above trivial Sharpe
+    "wf_consistency_min": 1.0,    # profitable in every window
+}
+
+
+def evaluate_quality_gate(validation: Dict[str, Any], metrics: Dict[str, Any]) -> Dict[str, Any]:
+    """Evaluate validation results against Tier 1/2/3 acceptance criteria.
+
+    Args:
+        validation: Results from run_validation().
+        metrics: Backtest metrics dict.
+
+    Returns:
+        Dict with quality_tier (0=untested, 1/2/3=tier achieved),
+        tier_results (per-tier pass/fail details), and summary.
+    """
+    tier_results = {}
+    achieved_tier = 0
+
+    # ── Tier 1 checks ──
+    t1 = TIER_1.copy()
+    t1_pass = True
+    t1_details = {}
+
+    wf = validation.get("walk_forward", {})
+    t1_details["wf_consistency"] = wf.get("consistency_rate", 0.0)
+    if t1_details["wf_consistency"] < t1["wf_consistency_min"]:
+        t1_pass = False
+
+    bs = validation.get("bootstrap", {})
+    t1_details["bs_prob_positive"] = bs.get("prob_positive", 0.0)
+    if t1_details["bs_prob_positive"] < t1["bs_prob_positive_min"]:
+        t1_pass = False
+
+    t1_details["trade_count"] = metrics.get("trade_count", 0)
+    if t1_details["trade_count"] < t1["trade_count_min"]:
+        t1_pass = False
+
+    t1_details["max_drawdown"] = metrics.get("max_drawdown", 0.0)
+    if t1_details["max_drawdown"] < t1["max_drawdown_max"]:
+        t1_pass = False
+
+    tier_results["tier_1"] = {"passed": t1_pass, "details": t1_details}
+    if t1_pass:
+        achieved_tier = 1
+
+    # ── Tier 2 checks (only if Tier 1 passed) ──
+    if t1_pass:
+        t2 = TIER_2.copy()
+        t2_pass = True
+        t2_details = {}
+
+        mcr = validation.get("monte_carlo_returns", {})
+        t2_details["mc_p_value"] = mcr.get("p_value", 1.0)
+        if t2_details["mc_p_value"] > t2["mc_p_value_max"]:
+            t2_pass = False
+
+        t2_details["bs_ci_lower"] = bs.get("ci_lower", -1.0)
+        if t2_details["bs_ci_lower"] <= t2["bs_ci_lower_min"]:
+            t2_pass = False
+
+        t2_details["wf_sharpe_std"] = wf.get("sharpe_std", 999.0)
+        if t2_details["wf_sharpe_std"] > t2["wf_sharpe_std_max"]:
+            t2_pass = False
+
+        t2_details["wf_consistency"] = wf.get("consistency_rate", 0.0)
+        if t2_details["wf_consistency"] < t2["wf_consistency_min"]:
+            t2_pass = False
+
+        tier_results["tier_2"] = {"passed": t2_pass, "details": t2_details}
+        if t2_pass:
+            achieved_tier = 2
+
+    # ── Tier 3 checks (only if Tier 2 passed) ──
+    if achieved_tier == 2:
+        t3 = TIER_3.copy()
+        t3_pass = True
+        t3_details = {}
+
+        t3_details["mc_p_value"] = mcr.get("p_value", 1.0)
+        if t3_details["mc_p_value"] > t3["mc_p_value_max"]:
+            t3_pass = False
+
+        t3_details["bs_ci_lower"] = bs.get("ci_lower", -1.0)
+        if t3_details["bs_ci_lower"] <= t3["bs_ci_lower_min"]:
+            t3_pass = False
+
+        t3_details["wf_consistency"] = wf.get("consistency_rate", 0.0)
+        if t3_details["wf_consistency"] < t3["wf_consistency_min"]:
+            t3_pass = False
+
+        tier_results["tier_3"] = {"passed": t3_pass, "details": t3_details}
+        if t3_pass:
+            achieved_tier = 3
+
+    return {
+        "quality_tier": achieved_tier,
+        "tier_results": tier_results,
+    }
+
+
 # ─── Monte Carlo Permutation Test ───
 
 

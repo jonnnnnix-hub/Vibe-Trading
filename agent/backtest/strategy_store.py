@@ -64,7 +64,8 @@ CREATE TABLE IF NOT EXISTS metrics (
     trade_count         INTEGER,
     avg_holding_days    REAL,
     max_consecutive_loss INTEGER,
-    information_ratio   REAL
+    information_ratio   REAL,
+    quality_tier        INTEGER DEFAULT 0  -- 0=untested, 1/2/3=tier achieved
 );
 
 -- Statistical validation results
@@ -255,13 +256,15 @@ class StrategyStore:
             ))
 
             # ── Insert metrics ──
+            quality_tier = metrics.get("quality_gate", {}).get("quality_tier", 0)
             conn.execute("""
                 INSERT OR REPLACE INTO metrics
                 (run_id, total_return, annual_return, excess_return,
                  benchmark_return, sharpe, sortino, calmar, max_drawdown,
                  win_rate, profit_factor, profit_loss_ratio, trade_count,
-                 avg_holding_days, max_consecutive_loss, information_ratio)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 avg_holding_days, max_consecutive_loss, information_ratio,
+                 quality_tier)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 run_id,
                 metrics.get("total_return"),
@@ -279,6 +282,7 @@ class StrategyStore:
                 metrics.get("avg_holding_days"),
                 metrics.get("max_consecutive_loss"),
                 metrics.get("information_ratio"),
+                quality_tier,
             ))
 
             # ── Insert validation ──
@@ -383,6 +387,45 @@ class StrategyStore:
             return [dict(r) for r in rows]
         except Exception as exc:
             logger.warning("Strategy store query failed: %s", exc)
+            return []
+
+    def query_by_tier(
+        self,
+        min_tier: int = 2,
+        market_type: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Query runs that achieved a minimum quality tier.
+
+        Args:
+            min_tier: Minimum tier (1=Tier-1, 2=Tier-2, 3=Tier-3).
+            market_type: Filter by market (None = all).
+
+        Returns:
+            List of qualifying runs.
+        """
+        try:
+            conn = self._get_conn()
+            if market_type:
+                rows = conn.execute("""
+                    SELECT r.run_id, r.strategy_type, r.market_type, r.date_range,
+                           m.quality_tier, m.sharpe, m.total_return,
+                           m.max_drawdown, m.trade_count
+                    FROM runs r JOIN metrics m ON r.run_id = m.run_id
+                    WHERE r.market_type = ? AND m.quality_tier >= ?
+                    ORDER BY m.quality_tier DESC, m.sharpe DESC
+                """, (market_type, min_tier)).fetchall()
+            else:
+                rows = conn.execute("""
+                    SELECT r.run_id, r.strategy_type, r.market_type, r.date_range,
+                           m.quality_tier, m.sharpe, m.total_return,
+                           m.max_drawdown, m.trade_count
+                    FROM runs r JOIN metrics m ON r.run_id = m.run_id
+                    WHERE m.quality_tier >= ?
+                    ORDER BY m.quality_tier DESC, m.sharpe DESC
+                """, (min_tier,)).fetchall()
+            return [dict(r) for r in rows]
+        except Exception as exc:
+            logger.warning("Strategy store query_by_tier failed: %s", exc)
             return []
 
     def find_similar(self, signal_source: str, threshold: float = 0.8) -> List[Dict[str, Any]]:

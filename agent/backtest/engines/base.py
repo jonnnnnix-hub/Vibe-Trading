@@ -321,6 +321,21 @@ class BaseEngine(ABC):
         v_path.parent.mkdir(parents=True, exist_ok=True)
         v_path.write_text(json.dumps(v_results, indent=2, ensure_ascii=False), encoding="utf-8")
 
+        # 7b. Quality Gate: evaluate against Tier 1/2/3 acceptance criteria
+        from backtest.validation import evaluate_quality_gate
+        gate = evaluate_quality_gate(v_results, m)
+        m["quality_gate"] = gate
+        tier = gate["quality_tier"]
+        tier_labels = {0: "UNTESTED", 1: "TIER-1", 2: "TIER-2", 3: "TIER-3"}
+        gate_status = "PASS" if tier >= 2 else "FAIL"
+        print(f"\n{'='*50}")
+        print(f"QUALITY_GATE: {gate_status} — {tier_labels.get(tier, 'UNKNOWN')}")
+        print(f"{'='*50}")
+        for tier_name, tier_data in gate["tier_results"].items():
+            passed = "✅" if tier_data["passed"] else "❌"
+            print(f"  {passed} {tier_name}: {tier_data['details']}")
+        print()
+
         # 8. Artifacts
         self._write_artifacts(
             run_dir, data_map, dates, equity_series, bench_equity, bench_ret,

@@ -52,6 +52,8 @@ def _ensure_registered() -> None:
         "backtest.loaders.yfinance_loader",
         "backtest.loaders.akshare_loader",
         "backtest.loaders.ccxt_loader",
+        "backtest.loaders.polygon_loader",
+        "backtest.loaders.fmp_loader",
     ]
     import importlib
     for mod in _loader_modules:
@@ -67,8 +69,8 @@ def _ensure_registered() -> None:
 
 FALLBACK_CHAINS: dict[str, list[str]] = {
     "a_share":   ["tushare", "akshare"],
-    "us_equity": ["yfinance", "akshare"],
-    "hk_equity": ["yfinance", "akshare"],
+    "us_equity": ["polygon", "fmp", "yfinance", "akshare"],
+    "hk_equity": ["polygon", "fmp", "yfinance", "akshare"],
     "crypto":    ["okx", "ccxt"],
     "futures":   ["tushare", "akshare"],
     "fund":      ["tushare", "akshare"],

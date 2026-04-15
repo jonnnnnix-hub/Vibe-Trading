@@ -1,0 +1,44 @@
+{
+  "codes": [
+    "AAPL.US", "ABBV.US", "ADBE.US", "AMD.US", "AMT.US",
+    "AMZN.US", "APD.US", "AVGO.US", "AXP.US", "BAC.US",
+    "BLK.US", "CAT.US", "COP.US", "COST.US", "CRM.US",
+    "CVX.US", "DE.US", "DIS.US", "GE.US", "GOOGL.US",
+    "GS.US", "HD.US", "HON.US", "INTC.US", "JNJ.US",
+    "JPM.US", "KO.US", "LIN.US", "LLY.US", "MA.US",
+    "MCD.US", "META.US", "MRK.US", "MS.US", "MSFT.US",
+    "NEE.US", "NFLX.US", "NKE.US", "NVDA.US", "ORCL.US",
+    "PEP.US", "PFE.US", "PG.US", "QCOM.US", "RTX.US",
+    "SBUX.US", "SLB.US", "SO.US", "T.US", "TMO.US",
+    "TSLA.US", "UNH.US", "UPS.US", "V.US", "XOM.US",
+    "CARR.US", "DHR.US", "ELV.US", "ITW.US",
+    "MMM.US", "PNC.US", "SCHW.US", "SYK.US", "TJX.US",
+    "ADP.US", "BMY.US", "CB.US", "CI.US", "DUK.US",
+    "EQIX.US", "GILD.US", "ICE.US", "MO.US", "NSC.US",
+    "PLD.US", "REGN.US", "SHW.US", "USB.US", "WM.US",
+    "AON.US", "BKNG.US", "CME.US", "CSX.US", "EMR.US",
+    "GD.US", "HUM.US", "KLAC.US", "LRCX.US", "MCO.US",
+    "MU.US", "NOC.US", "PSA.US", "SNPS.US", "TGT.US",
+    "AMAT.US", "APH.US", "BDX.US", "ECL.US"
+  ],
+  "start_date": "2015-01-01",
+  "end_date": "2026-04-11",
+  "source": "auto",
+  "interval": "1D",
+  "engine": "daily",
+  "initial_cash": 1000000,
+  "leverage": 1.0,
+  "optimizer": "cash_aware",
+  "optimizer_params": {
+    "target_exposure": 0.65,
+    "lookback": 60
+  },
+  "trailing_stop_pct": 0.18,
+  "trailing_stop_activation": 0.05,
+  "portfolio_stop_pct": 0.35,
+  "validation": {
+    "min_trades": 10,
+    "max_drawdown": -0.50,
+    "min_sharpe": -1.0
+  }
+}
