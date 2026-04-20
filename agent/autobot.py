@@ -187,6 +187,16 @@ def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
     df["OBV"] = (direction * volume).cumsum()
     df["OBV_slope_10d"] = df["OBV"].diff(10)
 
+    # ── Williams %R (14) — replaces RSI for momentum expert (consolidation) ──
+    highest_14 = high.rolling(14).max()
+    lowest_14 = low.rolling(14).min()
+    wr_range = highest_14 - lowest_14
+    df["Williams_R_14"] = np.where(
+        wr_range > 0,
+        -100 * (highest_14 - close) / wr_range,
+        -50.0,  # Neutral default
+    )
+
     # ── Momentum ─────────────────────────────────────────────────────────────
     df["Momentum_5d"] = close.pct_change(5) * 100
     df["Momentum_10d"] = close.pct_change(10) * 100
@@ -317,32 +327,39 @@ def evaluate_trend_expert(row: pd.Series) -> Tuple[str, float]:
 
 
 def evaluate_momentum_expert(row: pd.Series) -> Tuple[str, float]:
-    """Momentum expert: RSI + MACD + ADX health check.
+    """Momentum expert: Williams %R + MACD + ADX health check.
 
-    AGREE:    RSI 40-70  AND  MACD_histogram > 0  AND  ADX >= 20
-    DISAGREE: RSI > 75, RSI < 30, ADX < 15, OR (MACD_histogram <= 0 AND RSI 40-70)
-    ABSTAIN:  borderline RSI / ADX
+    Uses Williams %R(14) instead of RSI(14) for cross-repo differentiation.
+    Williams %R is on -100 to 0 scale (inverted from RSI's 0-100):
+      -60 to -30 = healthy momentum (equivalent to RSI 40-70)
+      > -20 = overbought (equivalent to RSI > 80)
+      < -80 = oversold (equivalent to RSI < 20)
+
+    AGREE:    Williams %R -60 to -30  AND  MACD_histogram > 0  AND  ADX >= 20
+    DISAGREE: Williams %R > -20, < -80, ADX < 15, OR (MACD <= 0 in healthy range)
+    ABSTAIN:  borderline
     """
     try:
-        rsi = row.get("RSI_14", np.nan)
+        wr = row.get("Williams_R_14", np.nan)
         macd_h = row.get("MACD_histogram", np.nan)
         adx = row.get("ADX_14", np.nan)
 
-        if any(pd.isna([rsi, macd_h, adx])):
+        if any(pd.isna([wr, macd_h, adx])):
             return ("ABSTAIN", 0.5)
 
-        # DISAGREE
-        if rsi > 75 or rsi < 30 or adx < 15:
+        # DISAGREE — extreme overbought/oversold or weak trend
+        if wr > -20 or wr < -80 or adx < 15:
             return ("DISAGREE", 0.8)
-        if 40 <= rsi <= 70 and macd_h <= 0:
+        if -60 <= wr <= -30 and macd_h <= 0:
             return ("DISAGREE", 0.6)
 
-        # AGREE
-        if 40 <= rsi <= 70 and macd_h > 0 and adx >= 20:
-            rsi_conf = float(np.clip(1.0 - abs(rsi - 60) / 20, 0.3, 1.0))
+        # AGREE — healthy momentum zone with trend confirmation
+        if -60 <= wr <= -30 and macd_h > 0 and adx >= 20:
+            # Confidence from Williams %R distance to center (-45 is ideal)
+            wr_conf = float(np.clip(1.0 - abs(wr - (-45)) / 15, 0.3, 1.0))
             macd_conf = 0.8 if macd_h > 0 else 0.5
             adx_conf = float(np.clip((adx - 20) / 30, 0, 1)) * 0.3 + 0.5
-            conf = float(np.clip(rsi_conf * 0.5 + macd_conf * 0.25 + adx_conf * 0.25, 0.45, 0.95))
+            conf = float(np.clip(wr_conf * 0.5 + macd_conf * 0.25 + adx_conf * 0.25, 0.45, 0.95))
             return ("AGREE", conf)
 
         # Borderline / ABSTAIN
